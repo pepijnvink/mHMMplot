@@ -139,23 +139,23 @@ plot_gamma <- function(model = NULL,
               values_to = "prob"
             ) %>%
             dplyr::mutate(
-              From_state = factor(From_state, labels = state_labels),
-              To_state = factor(To_state, labels = state_labels)
+              From_state = factor(.data$From_state, labels = state_labels),
+              To_state = factor(.data$To_state, labels = state_labels)
             )
         }) %>%
           dplyr::bind_rows(.id = "Subject") %>%
-          dplyr::mutate(Subject = factor(Subject, levels = paste("Subject", ID)))
+          dplyr::mutate(Subject = factor(.data$Subject, levels = paste("Subject", ID)))
         gg <- ggplot2::ggplot(data = gamma_melt,
-                              mapping = ggplot2::aes(x = To_state, y = From_state, fill = prob)) +
+                              mapping = ggplot2::aes(x = .data$To_state, y = .data$From_state, fill = .data$prob)) +
           ggplot2::geom_tile(color = "white") +
           ggplot2::scale_fill_distiller(palette = "Spectral",
                                         limits = c(0, 1),
                                         name = "State switching\nprobability") +
           ggplot2::geom_text(
             mapping = ggplot2::aes(
-              x = To_state,
-              y = From_state,
-              label = round(prob, digits)
+              x = .data$To_state,
+              y = .data$From_state,
+              label = format(round(.data$prob, digits), nsmall = digits)
             ),
             color = "black",
             size = 4
@@ -179,12 +179,12 @@ plot_gamma <- function(model = NULL,
             names_to = "From_To",
             values_to = "prob"
           ) %>%
-          dplyr::mutate(Subject = factor(Subject, levels = paste("Subject", ID)))
+          dplyr::mutate(Subject = factor(.data$Subject, levels = paste("Subject", ID)))
         gg <- gamma_matrix %>%
           ggplot2::ggplot(mapping = ggplot2::aes(
-            x = From_To,
-            y = Subject,
-            fill = prob
+            x = .data$From_To,
+            y = .data$Subject,
+            fill = .data$prob
           )) +
           ggplot2::geom_tile(color = "white") +
           ggplot2::scale_fill_distiller(palette = "Spectral",
@@ -192,9 +192,9 @@ plot_gamma <- function(model = NULL,
                                         name = "State switching\n probability") +
           ggplot2::geom_text(
             mapping = ggplot2::aes(
-              x = From_To,
-              y = Subject,
-              label = round(prob, digits)
+              x = .data$From_To,
+              y = .data$Subject,
+              label = format(round(.data$prob, digits), nsmall = digits)
             ),
             color = "darkslategrey",
             size = 3
@@ -222,21 +222,21 @@ plot_gamma <- function(model = NULL,
     )
   gamma_melt <- gamma_melt %>%
     dplyr::mutate(
-      From_state = factor(From_state, labels = state_labels),
-      To_state = factor(To_state, labels = state_labels)
+      From_state = factor(.data$From_state, labels = state_labels),
+      To_state = factor(.data$To_state, labels = state_labels)
     )
   if (level == "group" | !is.null(ID)) {
     gg <- ggplot2::ggplot(data = gamma_melt,
-                          mapping = ggplot2::aes(x = To_state, y = From_state, fill = prob)) +
+                          mapping = ggplot2::aes(x = .data$To_state, y = .data$From_state, fill = .data$prob)) +
       ggplot2::geom_tile(color = "white") +
       ggplot2::scale_fill_distiller(palette = "Spectral",
                                     limits = c(0, 1),
                                     name = "State switching\nprobability") +
       ggplot2::geom_text(
         mapping = ggplot2::aes(
-          x = To_state,
-          y = From_state,
-          label = round(prob, digits)
+          x = .data$To_state,
+          y = .data$From_state,
+          label = format(round(.data$prob, digits), nsmall = digits)
         ),
         color = "black",
         size = 4

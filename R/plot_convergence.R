@@ -285,7 +285,7 @@ plot_convergence <- function(model,
   }
   obj <- obj %>%
     dplyr::bind_rows(.id = "chain") %>%
-    dplyr::mutate(chain = factor(chain, labels = paste("Chain", 1:n_chains)))
+    dplyr::mutate(chain = factor(.data$chain, labels = paste("Chain", 1:n_chains)))
   clnm <- list(
     "emiss_int_bar" = c("State", "Category"),
     "emiss_prob_bar" = c("State", "Category"),
@@ -342,11 +342,11 @@ plot_convergence <- function(model,
   )
   pat <- ptrns[param_name]
   obj <- obj %>%
-    dplyr::group_by(chain) %>%
+    dplyr::group_by(.data$chain) %>%
     dplyr::mutate(iter = 1:dplyr::n()) %>%
     dplyr::ungroup() %>%
     tidyr::pivot_longer(
-      cols = -c(chain, iter),
+      cols = -c(.data$chain, .data$iter),
       names_to = colmns,
       names_pattern = pat
     )
@@ -397,14 +397,14 @@ plot_convergence <- function(model,
       n_levels_cat <- model_1$input$q_emiss[vrb_ind]
       obj <- obj %>%
         dplyr::mutate(Category = factor(
-          Category,
+          .data$Category,
           levels = 1:n_levels_cat,
           labels = paste("Category", 1:n_levels_cat)
         ))
     } else {
       obj <- obj %>%
         dplyr::mutate(Category = factor(
-          Category,
+          .data$Category,
           levels = 1:n_levels_cat,
           labels = cat_labels
         ))
@@ -413,17 +413,17 @@ plot_convergence <- function(model,
     n_levels_cat <- model_1$input$q_emiss[vrb_ind]
     obj <- obj %>%
       dplyr::mutate(Category = factor(
-        Category,
+        .data$Category,
         levels = 1:n_levels_cat,
         labels = paste("Category", 1:n_levels_cat)
       ))
   }
   if (n_chains > 1) {
     gg <- obj %>%
-      ggplot2::ggplot(mapping = ggplot2::aes(x = iter, y = value, color = chain))
+      ggplot2::ggplot(mapping = ggplot2::aes(x = .data$iter, y = .data$value, color = .data$chain))
   } else {
     gg <- obj %>%
-      ggplot2::ggplot(mapping = ggplot2::aes(x = iter, y = value))
+      ggplot2::ggplot(mapping = ggplot2::aes(x = .data$iter, y = .data$value))
   }
   gg <-  gg +
     ggplot2::geom_line()

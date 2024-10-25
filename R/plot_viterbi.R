@@ -64,6 +64,10 @@ plot_viterbi <- function(states,
                          colors = NULL,
                          ID = NULL,
                          state_labels = NULL){
+  if(!inherits(states, "data.frame")){
+    cli::cli_abort(c("!" = "The input for the {.var states} must be a matrix with inferred states, built using {.fn mHMMbayes:vit_mHMM()}.",
+                   "x" = "You provided an object of class {.cls {class(states)}}."))
+  }
   m <- max(states$state)
   if(!is.null(state_labels) & length(state_labels) != m){
     len <- length(state_labels)
@@ -76,25 +80,25 @@ plot_viterbi <- function(states,
   }
   if(!is.null(ID)){
     states <- states[states$subj %in% ID,] %>%
-      dplyr::mutate(subj = factor(subj, levels = ID))
+      dplyr::mutate(subj = factor(.data$subj, levels = ID))
   }
   if(is.null(state_labels)){
     state_labels <- paste("State", 1:m)
   }
   states <- states %>%
-    dplyr::mutate(state = factor(state,
+    dplyr::mutate(state = factor(.data$state,
                                  labels = state_labels)) %>%
-    dplyr::mutate(subj = factor(subj)) %>%
-    dplyr::group_by(subj) %>%
+    dplyr::mutate(subj = factor(.data$subj)) %>%
+    dplyr::group_by(.data$subj) %>%
     dplyr::mutate(beep = 1:dplyr::n()) %>%
     dplyr::ungroup()
   gg <- ggplot2::ggplot(data = states) +
-    ggplot2::geom_rect(mapping = ggplot2::aes(xmin = beep - 0.5,
+    ggplot2::geom_rect(mapping = ggplot2::aes(xmin = .data$beep - 0.5,
                                               ymin = 0,
                                               ymax = 1,
-                                              xmax = beep + 0.5,
-                                              fill = state)) +
-    ggplot2::facet_grid(rows = ggplot2::vars(subj)) +
+                                              xmax = .data$beep + 0.5,
+                                              fill = .data$state)) +
+    ggplot2::facet_grid(rows = ggplot2::vars(.data$subj)) +
     ggplot2::xlab("Beep") +
     ggplot2::theme(
       axis.title.y = ggplot2::element_blank(),
