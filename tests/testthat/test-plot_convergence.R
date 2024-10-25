@@ -130,6 +130,6 @@ test_that("Continuous", {
     expect_warning()
   expect_error(plot_convergence(out_3st_cont, component = "gamma", level = "subject"))
 })
-test_that("Other", {
+test_that("Other errors", {
   expect_error(plot_convergence(c(1,2)))
 })

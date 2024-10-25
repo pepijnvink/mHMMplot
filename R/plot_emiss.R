@@ -2,8 +2,9 @@
 #'
 #' @param model Object of type `mHMMbayes::mHMM` or `mHMMbayes:mHMM_vary`, created using [mHMMbayes::mHMM()] or [mHMMbayes::mHMM_vary()].
 #' @param type String specifying the type of plot to return. Currently takes "bar" and "boxplot".
-#' @param individual Logical specifying whether a layer of individual estimates should be plotted.
 #' @param state_labels Optional character vector specifying labels of the states.
+#' @param individual Logical specifying whether a layer of individual estimates should be plotted.
+#' @param alpha Numeric value indicating transparency of subject-specific posterior densities.
 #'
 #' @return
 #' Object of type `ggplot2::gg` plotting emission distributions.
@@ -62,7 +63,6 @@ plot_emiss <- function(model = NULL,
                        type = "bar",
                        state_labels = NULL,
                        individual = TRUE,
-                       line = FALSE,
                        alpha = 0.5) {
   check_model(model, classes = c("mHMM", "mHMM_vary"))
   m <- model$input$m
@@ -98,9 +98,9 @@ plot_emiss <- function(model = NULL,
         tibble::rownames_to_column(var = "State")
     }) %>%
       dplyr::bind_rows(.id = "Dep") %>%
-      dplyr::mutate(State = factor(State, label = 1:m))
+      dplyr::mutate(State = factor(.data$State, labels = 1:m))
     gg <- ggplot2::ggplot(data = emiss_group_melt,
-                          mapping = ggplot2::aes(x = State, y = Mean, fill = Dep)) +
+                          mapping = ggplot2::aes(x = .data$State, y = .data$Mean, fill = .data$Dep)) +
       ggplot2::geom_col()
     if (individual) {
       emiss_subj <- mHMMbayes::obtain_emiss(object = model, level = "subject")[cont_vrbs_ind]
@@ -122,7 +122,7 @@ plot_emiss <- function(model = NULL,
       gg <- gg +
         ggplot2::geom_jitter(
           data = gg_emiss_subject,
-          mapping = ggplot2::aes(x = State, y = Mean, fill = Dep),
+          mapping = ggplot2::aes(x = .data$State, y = .data$Mean, fill = .data$Dep),
           alpha = alpha,
           color = "black",
           pch = 21
@@ -148,7 +148,7 @@ plot_emiss <- function(model = NULL,
       z = gg_emiss_subject$State
     )
     gg <- ggplot2::ggplot(data = gg_emiss_subject,
-                          mapping = ggplot2::aes(x = State, y = Mean, fill = Dep)) +
+                          mapping = ggplot2::aes(x = .data$State, y = .data$Mean, fill = .data$Dep)) +
       ggplot2::geom_boxplot()
   }
   if (!is.null(state_labels)) {
@@ -156,7 +156,7 @@ plot_emiss <- function(model = NULL,
       ggplot2::scale_x_discrete(labels = state_labels)
   }
   gg <- gg +
-    ggplot2::facet_grid(cols = ggplot2::vars(Dep)) +
+    ggplot2::facet_grid(cols = ggplot2::vars(.data$Dep)) +
     ggplot2::theme_minimal() +
     ggplot2::theme(legend.position = "none") +
     ggplot2::xlab("Mood State") +

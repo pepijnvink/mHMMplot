@@ -9,7 +9,6 @@ plot_emiss(
   type = "bar",
   state_labels = NULL,
   individual = TRUE,
-  line = FALSE,
   alpha = 0.5
 )
 }
@@ -21,6 +20,8 @@ plot_emiss(
 \item{state_labels}{Optional character vector specifying labels of the states.}
 
 \item{individual}{Logical specifying whether a layer of individual estimates should be plotted.}
+
+\item{alpha}{Numeric value indicating transparency of subject-specific posterior densities.}
 }
 \value{
 Object of type `ggplot2::gg` plotting emission distributions.

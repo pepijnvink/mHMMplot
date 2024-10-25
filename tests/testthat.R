@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(gg_mHMM)
+library(ggmHMM)
 
-test_check("gg_mHMM")
+test_check("ggmHMM")

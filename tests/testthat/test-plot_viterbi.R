@@ -1,4 +1,5 @@
 viterbi <- readRDS(test_path("fixtures", "viterbi.rds"))
+out_2st_cat <- readRDS(test_path("fixtures", "mhmm_cat.rds"))
 test_that("Plotting works",{
   expect_s3_class(plot_viterbi(viterbi), "ggplot")
   expect_s3_class(plot_viterbi(viterbi,
@@ -9,12 +10,11 @@ test_that("Plotting works",{
                                state_labels = c("red", "green")), "ggplot")
   expect_s3_class(plot_viterbi(viterbi,
                                ID = 1,
-                               state_labels = c("red", "green", "blue")), "ggplot")
+                               state_labels = c("red", "green", "blue")), "ggplot") %>%
+    expect_warning()
 }
                     )
 test_that("Warning and errors",{
-  expect_warning(plot_viterbi(viterbi,
-                              ID = 1,
-                              state_labels = c("red", "green", "blue")))
+  expect_error(plot_viterbi(out_2st_cat))
 }
           )

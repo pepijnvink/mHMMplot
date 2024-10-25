@@ -114,8 +114,7 @@ plot_posterior <- function(model,
                                     .name_repair = "minimal")
     data_subj <- lapply(model[["PD_subj"]], function(x) {
       x$trans_prob[burnin:J, ] %>%
-        tibble::as_tibble() %>%
-        dplyr::rename_with( ~ colnames_gamma) %>%
+        tibble::as_tibble(.name_repair = ~colnames_gamma) %>%
         tidyr::pivot_longer(
           cols = tidyselect::everything(),
           values_to = "Transition Probability",
@@ -135,7 +134,7 @@ plot_posterior <- function(model,
       gg <- gg +
         ggplot2::stat_density(
           data = data_subj[[i]],
-          mapping = ggplot2::aes(x = `Transition Probability`, color = To),
+          mapping = ggplot2::aes(x = .data$`Transition Probability`, color = .data$To),
           alpha = alpha,
           geom = "line",
           position = "identity"
@@ -143,13 +142,13 @@ plot_posterior <- function(model,
     }
     gg <- gg  +
       ggplot2::stat_density(
-        mapping = ggplot2::aes(x = `Transition Probability`, color = To),
+        mapping = ggplot2::aes(x = .data$`Transition Probability`, color = .data$To),
         linewidth = 1,
         geom = "line",
         position = "identity"
       ) +
       ggplot2::coord_cartesian(ylim = c(0, maxy)) +
-      ggplot2::facet_wrap( ~ From, labeller = ggplot2::labeller(From = facet_labels)) +
+      ggplot2::facet_wrap( ~ .data$From, labeller = ggplot2::labeller(From = facet_labels)) +
       ggplot2::scale_color_discrete(labels = state_labels)
 
   } else {
@@ -208,7 +207,7 @@ plot_posterior <- function(model,
         gg <- gg +
           ggplot2::stat_density(
             data = data_subj[[i]],
-            mapping = ggplot2::aes(x = `Conditional Probability`, color = Category),
+            mapping = ggplot2::aes(x = .data$`Conditional Probability`, color = .data$Category),
             alpha = alpha,
             geom = "line",
             position = "identity"
@@ -216,13 +215,13 @@ plot_posterior <- function(model,
       }
       gg <- gg +
         ggplot2::stat_density(
-          mapping = ggplot2::aes(x = `Conditional Probability`, color = Category),
+          mapping = ggplot2::aes(x = .data$`Conditional Probability`, color = .data$Category),
           linewidth = 1,
           geom = "line",
           position = "identity"
         ) +
         ggplot2::coord_cartesian(ylim = c(0, maxy)) +
-        ggplot2::facet_wrap( ~ State, labeller = ggplot2::labeller(State = state_labels)) +
+        ggplot2::facet_wrap( ~ .data$State, labeller = ggplot2::labeller(State = state_labels)) +
         ggplot2::scale_color_discrete(labels = cat_labels)
     } else if (data_distr == "continuous") {
       names_pattern <- paste0("dep", vrb_ind, "_S(\\d+)_([A-Za-z]+)")
@@ -253,7 +252,7 @@ plot_posterior <- function(model,
       for (i in 1:n_subj) {
         gg <- gg + ggplot2::stat_density(
           data = data_subj[[i]],
-          mapping = ggplot2::aes(x = Value, color = State),
+          mapping = ggplot2::aes(x = .data$Value, color = .data$State),
           alpha = alpha,
           geom = "line",
           position = "identity"
@@ -261,12 +260,12 @@ plot_posterior <- function(model,
       }
       gg <- gg +
         ggplot2::stat_density(
-          mapping = ggplot2::aes(x = Value, color = State),
+          mapping = ggplot2::aes(x = .data$Value, color = .data$State),
           linewidth = 1,
           geom = "line",
           position = "identity"
         ) +
-        ggplot2::facet_wrap( ~ Parameter, scales = "free") +
+        ggplot2::facet_wrap( ~ .data$Parameter, scales = "free") +
         ggplot2::scale_color_discrete(labels = state_labels)
     }
   }
