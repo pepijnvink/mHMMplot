@@ -107,7 +107,7 @@ plot_viterbi <- function(states,
     )
   if(!is.null(colors)){
     colors_vec <- colors
-    names(colors_vec) <- paste("State", 1:m)
+    names(colors_vec) <- state_labels
     gg <- gg +
       ggplot2::scale_fill_manual(values = ggplot2::alpha(colors_vec))
   }

@@ -6,6 +6,12 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
 
 The `ggmHMM` package provides wrapper functions used to visualize Bayesian Multilevel Hidden Markov Models, using the `ggplot2` package. Most functions take an object that is built using the `mHMMbayes` package. They output a 'ggplot' object, which can be edited by a user using functions from the `ggplot2` package. This vignette will not go into details of the Bayesian Multilevel Hidden Markov Model, neither into fitten a model; for that, see the documentation of the `mHMMbayes` package.
 
@@ -39,9 +45,9 @@ head(nonverbal)
 We will fit a simple 2-state model using the `mHMMbayes` package:
 
 ```{r settings and load models, include = FALSE}
-nonverbal_out_2st <- readRDS("vignettes/nonverbal_2st_1000it.rda")
-nonverbal_out_2st_2 <- readRDS("vignettes/nonverbal_2st_1000it_2.rda")
-out_3st_cont <- readRDS("vignettes/out_cont_3st.rds")
+nonverbal_out_2st <- readRDS("out_nonverbal_2st_1000iter.rds")
+nonverbal_out_2st_2 <- readRDS("out_nonverbal_2st_1000iter_2.rds")
+out_3st_cont <- readRDS("out_cont_3st.rds")
 ```
 
 ```{r show specifying 2 state model, eval = FALSE}
@@ -151,7 +157,7 @@ We will start by evaluating convergence at the group level using trace plots. We
 
 We first look at plotting the intercepts over iterations, corresponding to the transition probabilities:
 
-```{r plot gamma-group prob}
+```{r plot gamma-group intercept}
 plot_convergence(
   model = nonverbal_out_2st, # the model to plot
   component = "gamma", # plot transition probabilities
@@ -308,7 +314,7 @@ Alternatively, instead of a `mHMM:mHMM` object and a level specification, a, obj
 ```{r}
 ## Obtain group-level transition probabilities
 gamma_group <- obtain_gamma(
-  model = nonverbal_out_2st,
+  object = nonverbal_out_2st,
   level = "group"
 )
 ## Plot group-level transition probabilities
@@ -322,7 +328,7 @@ The same can be done for subject-level transition probabilities:
 ```{r}
 ## Obtain group-level transition probabilities
 gamma_subj <- obtain_gamma(
-  model = nonverbal_out_2st,
+  object = nonverbal_out_2st,
   level = "subject"
 )
 ## Plot group-level transition probabilities
