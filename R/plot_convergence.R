@@ -287,8 +287,8 @@ plot_convergence <- function(model,
     dplyr::bind_rows(.id = "chain") %>%
     dplyr::mutate(chain = factor(.data$chain, labels = paste("Chain", 1:n_chains)))
   clnm <- list(
-    "emiss_int_bar" = c("State", "Category"),
-    "emiss_prob_bar" = c("State", "Category"),
+    "emiss_int_bar" = c("Category", "State"),
+    "emiss_prob_bar" = c("Category", "State"),
     "emiss_V_int_bar" = c("Category", "State"),
     "emiss_cov_bar",
     "emiss_mu_bar" = "State",
@@ -322,8 +322,8 @@ plot_convergence <- function(model,
     vrb_ind <- 1
   }
   ptrns <- c(
-    "emiss_int_bar" = "S(\\d+)_int_emiss(\\d+)",
-    "emiss_prob_bar" = "S(\\d+)_emiss(\\d+)",
+    "emiss_int_bar" = "int_Emiss(\\d+)_S(\\d+)",
+    "emiss_prob_bar" = "Emiss(\\d+)_S(\\d+)",
     "emiss_V_int_bar" = "var_int_Emiss(\\d+)_S(\\d+)",
     "emiss_cov_bar",
     "emiss_mu_bar" = "mu_(\\d+)",

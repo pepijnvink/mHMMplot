@@ -2,7 +2,7 @@ Package: ggmHMM
 Type: Package
 Title: Plotting Bayesian Multilevel Hidden Markov Models from the mHMMbayes Package Using ggplot2
 Version: 0.1.0
-Author: person("Pepijn", "Vink", email = "p.a.vink@uu.nl", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-6960-9904"))
+Authors@R: person("Pepijn", "Vink", email = "p.a.vink@uu.nl", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-6960-9904"))
 Maintainer: Pepijn Vink <p.a.vink@uu.nl>
 Description: Visualize objects created using the mHMMbayes package wih ggplot2. The plotting functions output 'ggplot' objects that can be edited using the 'ggplot2' package. ggmHMM includes functions to plot obtained emission and transition probability distributions for both the group and the subject level. The package can also be used to obtain trace plots to evaluate convergence, plot infered states obtained using the viterbi algorithm, and plot the posterior distributions of estimates.
 License: GPL (>= 3)
@@ -20,5 +20,8 @@ Imports:
     tidyr,
     tidyselect
 Suggests: 
+    knitr,
+    rmarkdown,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
+VignetteBuilder: knitr
