@@ -100,7 +100,7 @@ plot_convergence <- function(model,
     }
   }
   is_mhmm_vary <- inherits(model_1, "mHMM_vary")
-  if (is.null(level) | !(level %in% c("group", "subject"))) {
+  if (is.null(level)) {
     cli::cli_abort(
       c("x" = "{.var level} specifying the level to plot has not been specified.", "!" = "Please specify 'group' to plot the group-level parameters, or 'subject' to plot the subject level parameters.")
     )
@@ -132,10 +132,18 @@ plot_convergence <- function(model,
   }
   m <- model_1$input$m
   vrb_ind <- NULL
+  if(!is.null(ID) & level == "group"){
+    cli::cli_warn(
+      c(
+        "You provided an ID number while plotting group-level distributions.",
+        "i" = "The ID number you provided will be ignored."
+      )
+    )
+  }
   if (component == "emiss") {
     vrb <- check_vrb(model_1, vrb)
     vrb_ind <- which(model_1$input$dep_labels == vrb)
-    if (inherits(model, "mHMM_vary")) {
+    if (inherits(model_1, "mHMM_vary")) {
       data_distr <- model_1$input$data_distr[which(model_1$input$dep_labels == vrb)]
     } else {
       data_distr <- model_1$input$data_distr
@@ -286,9 +294,10 @@ plot_convergence <- function(model,
   obj <- obj %>%
     dplyr::bind_rows(.id = "chain") %>%
     dplyr::mutate(chain = factor(.data$chain, labels = paste("Chain", 1:n_chains)))
+  is_vary <- inherits(model_1, "mHMM_vary")
   clnm <- list(
-    "emiss_int_bar" = c("Category", "State"),
-    "emiss_prob_bar" = c("Category", "State"),
+    "emiss_int_bar" = list(c("Category", "State"), c("State", "Category"))[[is_vary+1]],
+    "emiss_prob_bar" = list(c("Category", "State"), c("State", "Category"))[[is_vary+1]],
     "emiss_V_int_bar" = c("Category", "State"),
     "emiss_cov_bar",
     "emiss_mu_bar" = "State",
@@ -322,8 +331,8 @@ plot_convergence <- function(model,
     vrb_ind <- 1
   }
   ptrns <- c(
-    "emiss_int_bar" = "int_Emiss(\\d+)_S(\\d+)",
-    "emiss_prob_bar" = "Emiss(\\d+)_S(\\d+)",
+    "emiss_int_bar" = c("int_Emiss(\\d+)_S(\\d+)","S(\\d+)_int_emiss(\\d+)")[is_vary+1],
+    "emiss_prob_bar" = c("Emiss(\\d+)_S(\\d+)", "S(\\d+)_emiss(\\d+)")[is_vary+1],
     "emiss_V_int_bar" = "var_int_Emiss(\\d+)_S(\\d+)",
     "emiss_cov_bar",
     "emiss_mu_bar" = "mu_(\\d+)",
