@@ -264,7 +264,6 @@ Another option is to plot boxplots of the subject-level emission means. This can
 plot_emiss(
   model = out_3st_cont, # specify model to plot
   type = "boxplot", # obtain a bar chart
-  state_labels = c("red", "orange", "green"), # we can give custom labels to the states
 )
 ```
 
@@ -375,13 +374,11 @@ plot_viterbi(
 )
 ```
 
-As shown above, the default is to plot infered states for all individuals. In the plot below, the states for only a subset of individuals is plotted. In addition, we specify a vector of colors to assign to each state, as well as names to assign to each state.
+As shown above, the default is to plot infered states for all individuals. In the plot below, the states for only a subset of individuals is plotted.
 ```{r}
 plot_viterbi(
   states = states, # dataframe with states
-  colors = c("blue", "orange"), # specify colors to use
-  ID = 1:5, # vector specifying subjects to plot. integer for a single subject is also possible
-  state_labels = c("Patient Speaking State", "Patient Listening State")
+  ID = 1:5 # vector specifying subjects to plot. integer for a single subject is also possible
 )
 ```
 

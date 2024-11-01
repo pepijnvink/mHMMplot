@@ -4,14 +4,7 @@
 \alias{plot_gamma}
 \title{Heat Plot for Transition Probability Matrix of a Bayesian Multilevel Hidden Markov Model}
 \usage{
-plot_gamma(
-  model = NULL,
-  level = "group",
-  ID = NULL,
-  state_labels = NULL,
-  digits = 2,
-  facet = TRUE
-)
+plot_gamma(model = NULL, level = "group", ID = NULL, digits = 2, facet = TRUE)
 }
 \arguments{
 \item{model}{Object of type `mHMMbayes::mHMM`, `mHMMbayes::mHMM_vary`, or `mHMMbayes::mHMM_gamma`, created using [mHMMbayes::mHMM()], [mHMMbayes::mHMM_vary()], [mHMMbayes::obtain_gamma()].}
@@ -19,8 +12,6 @@ plot_gamma(
 \item{level}{String specifying the level of transition distributions to plot. Options are "group" and "subject".}
 
 \item{ID}{Optional integer or integer vector specifying the subject(s) to plot.}
-
-\item{state_labels}{Optional character vectors specifying labels of the states.}
 
 \item{digits}{Integer specifying the number of digits to round to.}
 

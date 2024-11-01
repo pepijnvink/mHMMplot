@@ -4,7 +4,7 @@
 \alias{plot_viterbi}
 \title{Plot inferred states of a Bayesian Multilevel Hidden Markov Model}
 \usage{
-plot_viterbi(states, colors = NULL, ID = NULL, state_labels = NULL)
+plot_viterbi(states, ID = NULL)
 }
 \arguments{
 \item{states}{Matrix with inferred states obtained using [mHMMbayes::vit_HMM()].}

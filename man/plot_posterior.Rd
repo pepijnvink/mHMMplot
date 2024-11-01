@@ -19,7 +19,7 @@ plot_posterior(
 
 \item{component}{Character string specifying the component to plot. Takes "gamma" or "emiss".}
 
-\item{vrb}{Character tring specifying the dependent variable to plot.}
+\item{vrb}{Character string specifying the dependent variable to plot when plotting emission distributions.}
 
 \item{state_labels}{Optional character string specifying labels to use for the inferred states.}
 
