@@ -245,7 +245,6 @@ plot_convergence(
 plot_emiss(
   model = out_3st_cont, # specify model to plot
   type = "bar", # obtain a bar chart
-  state_labels = c("red", "orange", "green"), # we can give custom labels to the states
   individual = FALSE # do not overlay individual-level points
 )
 ```
@@ -255,7 +254,6 @@ When we choose a bar plot, we can also choose to overlay the subject-level estim
 plot_emiss(
   model = out_3st_cont, # specify model to plot
   type = "bar", # obtain a bar chart
-  state_labels = c("red", "orange", "green"), # we can give custom labels to the states
   individual = TRUE, # do not overlay individual-level points
   alpha = 0.5 # specify transparency of points
 )
@@ -276,7 +274,6 @@ plot_emiss(
 plot_gamma(
   model = nonverbal_out_2st, # mHMM model
   level = "group", # plot group level
-  state_labels = c("Patient Speaking State", "Patient Listening State"), # again, state labels are optional
   digits = 3 # number of digits to round to
 )
 ```

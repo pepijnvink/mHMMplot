@@ -7,7 +7,7 @@
 #' @param vrb Optional character string specifying the variable to plot when plotting categorical emission distributions.
 #' @param prob Logical specifying whether converence of transitions or categorical emissions should be plotted on the probability scale, rather than the log scale.
 #' @param ID Integer specifying the subject to plot subject specific parameters for.
-#' @param state_labels Optional character string specifying labels to use for the inferred states.
+#' @param state_labels Optional character string specifying labels to use for the states.
 #' @param cat_labels Optional character string used to specify labels for categories when plotting emission distributions of categorical variables.
 #'
 #' @return Object of type `ggplot2::gg`, plotting parameter distributions.

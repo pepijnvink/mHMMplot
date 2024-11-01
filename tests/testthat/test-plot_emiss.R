@@ -4,20 +4,10 @@ test_that("Obtain plots", {
                              type = "bar"), "ggplot")
   expect_s3_class(plot_emiss(out_3st_cont,
                              type = "bar",
-                             state_labels = c("a", "b", "c"),
-                             individual = TRUE), "ggplot")
+                             individual = TRUE,
+                             alpha = 0.5), "ggplot")
   expect_s3_class(plot_emiss(out_3st_cont,
-                             type = "bar",
-                             state_labels = c("a", "b"),
-                             individual = TRUE), "ggplot") %>%
-    expect_warning()
-  expect_s3_class(plot_emiss(out_3st_cont,
-                             type = "boxplot",
-                             state_labels = c("a", "b")), "ggplot") %>%
-    expect_warning()
-  expect_s3_class(plot_emiss(out_3st_cont,
-                             type = "boxplot",
-                             state_labels = c("a", "b", "c")), "ggplot")
+                             type = "boxplot"), "ggplot")
 })
 test_that("Other Error messages", {
   expect_error(plot_emiss(c(1,2)))
