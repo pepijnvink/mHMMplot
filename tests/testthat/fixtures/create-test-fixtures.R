@@ -42,6 +42,7 @@ out_3st_cont <- mHMM(s_data = data_cont$obs,
                          start_val = c(list(gamma), emiss_distr),
                          emiss_hyp_prior = manual_prior_emiss,
                          mcmc = list(J = 100, burn_in = 5))
+saveRDS(data_cont$obs, testthat::test_path("fixtures", "data_cont.rds"))
 saveRDS(out_3st_cont, testthat::test_path("fixtures", "mhmm_cont.rds"))
 
 # Categorical mHMM

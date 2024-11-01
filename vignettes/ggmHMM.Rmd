@@ -1,6 +1,9 @@
 ---
 title: "ggmHMM"
-output: rmarkdown::html_vignette
+output:
+  rmarkdown::html_vignette:
+    fig_width: 6
+    fig_height: 6
 vignette: >
   %\VignetteIndexEntry{ggmHMM}
   %\VignetteEngine{knitr::rmarkdown}

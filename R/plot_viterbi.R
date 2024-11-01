@@ -1,6 +1,7 @@
 #' Plot inferred states of a Bayesian Multilevel Hidden Markov Model
 #'
-#' @param states Matrix with inferred states obtained using [mHMMbayes::vit_HMM()].
+#' @param states Data Frame with inferred states obtained using [mHMMbayes::vit_HMM()] or object of class `mHMMbayes:mHMM`.
+#' @param s_data Data Frame with data used to infer states using the viterbi algorithm. Only required when the object given to `states` is of class `mHMMbayes::mHMM`.
 #' @param ID Optional numeric vector with indices of subjects to plot.
 #'
 #' @return
@@ -59,7 +60,17 @@
 #' plot_viterbi(states)
 #' }
 plot_viterbi <- function(states,
+                         s_data,
                          ID = NULL){
+  if(inherits(states, "mHMM")){
+    if(is.null(s_data)){
+      cli::cli_abort("x" =  "You provided an object of class {.cls mHMM} without a data frame with data to obtain states for.",
+                     "i" =  "Please use the {.var s_data} argument to provide a data frame, or instead use {.var states} to provide a data frame of inferred states.")
+    } else {
+      states <- mHMMbayes::vit_mHMM(states,
+                                    s_data = s_data)
+    }
+  }
   if(!inherits(states, "data.frame")){
     cli::cli_abort(c("!" = "The input for the {.var states} must be a matrix with inferred states, built using {.fn mHMMbayes:vit_mHMM()}.",
                    "x" = "You provided an object of class {.cls {class(states)}}."))
