@@ -3,7 +3,6 @@
 #' @param model Object of type `mHMMbayes::mHMM`, `mHMMbayes::mHMM_vary`, or `mHMMbayes::mHMM_gamma`, created using [mHMMbayes::mHMM()], [mHMMbayes::mHMM_vary()], [mHMMbayes::obtain_gamma()].
 #' @param level String specifying the level of transition distributions to plot. Options are "group" and "subject".
 #' @param ID Optional integer or integer vector specifying the subject(s) to plot.
-#' @param state_labels Optional character vectors specifying labels of the states.
 #' @param digits Integer specifying the number of digits to round to.
 #' @param facet Logical specifying whether subjects should be faceted when plotting subject-specific transition probability matrices.
 #'
@@ -63,7 +62,6 @@
 plot_gamma <- function(model = NULL,
                        level = "group",
                        ID = NULL,
-                       state_labels = NULL,
                        digits = 2,
                        facet = TRUE) {
   check_model(
@@ -104,21 +102,7 @@ plot_gamma <- function(model = NULL,
       m <- nrow(model)
     }
   }
-  if (!is.null(state_labels) & length(state_labels) != m) {
-    len <- length(state_labels)
-    cli::cli_warn(
-      c(
-        "The number of elements in {.var state_labels} must be equal to the number of states.",
-        "i" = "The number of states is {m}.",
-        "x" = "The number of elements in {.var state_labels} is {len}.",
-        "i" = "The argument {.var state_labels} will be ignored."
-      )
-    )
-    state_labels <- as.character(1:m)
-  }
-  if (is.null(state_labels)) {
-    state_labels <- as.character(1:m)
-  }
+  state_labels <- paste("State", 1:m)
   if (level == "subject") {
     if (is.null(ID)) {
       ID <- 1:nsubj
@@ -245,8 +229,7 @@ plot_gamma <- function(model = NULL,
       ggplot2::coord_fixed()
   }
   gg <- gg +
-    ggplot2::scale_x_discrete(labels = state_labels) +
-    ggplot2::scale_y_discrete(labels = state_labels, limits = rev) +
+    ggplot2::scale_y_discrete(limits = rev) +
     ggplot2::theme_classic()
   return(gg)
 }

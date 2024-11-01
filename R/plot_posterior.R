@@ -2,7 +2,7 @@
 #'
 #' @param model Object of type `mHMMbayes::mHMM` or `mHMMbayes::mHMM_vary` created using [mHMMbayes::mHMM()] or [mHMMbayes::mHMM_vary()].
 #' @param component Character string specifying the component to plot. Takes "gamma" or "emiss".
-#' @param vrb Character tring specifying the dependent variable to plot.
+#' @param vrb Character string specifying the dependent variable to plot when plotting emission distributions.
 #' @param state_labels Optional character string specifying labels to use for the inferred states.
 #' @param cat_labels Optional character string used to specify labels for categories when plotting emission distributions of categorical variables.
 #' @param burnin Optional integer specifying number of burnin iterations. If unspecified, the number of burnin iterations specified when fitting the model is used.

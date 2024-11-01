@@ -2,7 +2,6 @@
 #'
 #' @param model Object of type `mHMMbayes::mHMM` or `mHMMbayes:mHMM_vary`, created using [mHMMbayes::mHMM()] or [mHMMbayes::mHMM_vary()].
 #' @param type String specifying the type of plot to return. Currently takes "bar" and "boxplot".
-#' @param state_labels Optional character vector specifying labels of the states.
 #' @param individual Logical specifying whether a layer of individual estimates should be plotted.
 #' @param alpha Numeric value indicating transparency of subject-specific posterior densities.
 #'
@@ -61,25 +60,13 @@
 #' }
 plot_emiss <- function(model = NULL,
                        type = "bar",
-                       state_labels = NULL,
                        individual = TRUE,
                        alpha = 0.5) {
   check_model(model, classes = c("mHMM", "mHMM_vary"))
   m <- model$input$m
-  if (!is.null(state_labels) & length(state_labels) != m) {
-    len <- length(state_labels)
-    cli::cli_warn(
-      c(
-        "The number of elements in {.var state_labels} must be equal to the number of states.",
-        "i" = "The number of states is {m}.",
-        "x" = "The number of elements in {.var state_labels} is {len}.",
-        "i" = "The argument {.var state_labels} will be ignored."
-      )
-    )
-    state_labels <- NULL
-  }
   n_dep <- model$input$n_dep
   n_subj <- model$input$n_subj
+  state_labels <- paste("State", 1:m)
   if(inherits(model, "mHMM_vary")){
     cont_vrbs_ind <- which(model$input$data_distr == "continuous")
   } else {
@@ -98,7 +85,7 @@ plot_emiss <- function(model = NULL,
         tibble::rownames_to_column(var = "State")
     }) %>%
       dplyr::bind_rows(.id = "Dep") %>%
-      dplyr::mutate(State = factor(.data$State, labels = 1:m))
+      dplyr::mutate(State = factor(.data$State, labels = state_labels))
     gg <- ggplot2::ggplot(data = emiss_group_melt,
                           mapping = ggplot2::aes(x = .data$State, y = .data$Mean, fill = .data$Dep)) +
       ggplot2::geom_col()
@@ -106,7 +93,7 @@ plot_emiss <- function(model = NULL,
       emiss_subj <- mHMMbayes::obtain_emiss(object = model, level = "subject")[cont_vrbs_ind]
       gg_emiss_subject <- data.frame(
         Subj = rep(rep(1:n_subj, each = m), n_dep),
-        State = factor(rep(1:m, n_subj * n_dep)),
+        State = factor(rep(1:m, n_subj * n_dep), labels = state_labels),
         Dep = factor(c(rep(
           vrb, each = m * n_subj
         )), levels = vrb)
@@ -134,7 +121,7 @@ plot_emiss <- function(model = NULL,
     vrb <- names(emiss_subj)
     gg_emiss_subject <- data.frame(
       Subj = rep(rep(1:n_subj, each = m), n_dep),
-      State = factor(rep(1:m, n_subj * n_dep)),
+      State = factor(rep(1:m, n_subj * n_dep), labels = state_labels),
       Dep = factor(c(rep(
         vrb, each = m * n_subj
       )), levels = vrb)
@@ -150,10 +137,6 @@ plot_emiss <- function(model = NULL,
     gg <- ggplot2::ggplot(data = gg_emiss_subject,
                           mapping = ggplot2::aes(x = .data$State, y = .data$Mean, fill = .data$Dep)) +
       ggplot2::geom_boxplot()
-  }
-  if (!is.null(state_labels)) {
-    gg <- gg +
-      ggplot2::scale_x_discrete(labels = state_labels)
   }
   gg <- gg +
     ggplot2::facet_grid(cols = ggplot2::vars(.data$Dep)) +

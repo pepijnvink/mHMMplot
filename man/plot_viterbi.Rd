@@ -4,16 +4,12 @@
 \alias{plot_viterbi}
 \title{Plot inferred states of a Bayesian Multilevel Hidden Markov Model}
 \usage{
-plot_viterbi(states, colors = NULL, ID = NULL, state_labels = NULL)
+plot_viterbi(states, ID = NULL)
 }
 \arguments{
 \item{states}{Matrix with inferred states obtained using [mHMMbayes::vit_HMM()].}
 
-\item{colors}{Optional string vector specifying hex codes or character strings with colors to use. Length should be equal to the number of states m.}
-
 \item{ID}{Optional numeric vector with indices of subjects to plot.}
-
-\item{state_labels}{Optional character vectors specifying labels of the states.}
 }
 \value{
 Object of type `ggplot2::gg` with the plotted inferred states over time.

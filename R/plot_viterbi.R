@@ -1,9 +1,7 @@
 #' Plot inferred states of a Bayesian Multilevel Hidden Markov Model
 #'
 #' @param states Matrix with inferred states obtained using [mHMMbayes::vit_HMM()].
-#' @param colors Optional string vector specifying hex codes or character strings with colors to use. Length should be equal to the number of states m.
 #' @param ID Optional numeric vector with indices of subjects to plot.
-#' @param state_labels Optional character vectors specifying labels of the states.
 #'
 #' @return
 #' Object of type `ggplot2::gg` with the plotted inferred states over time.
@@ -61,30 +59,17 @@
 #' plot_viterbi(states)
 #' }
 plot_viterbi <- function(states,
-                         colors = NULL,
-                         ID = NULL,
-                         state_labels = NULL){
+                         ID = NULL){
   if(!inherits(states, "data.frame")){
     cli::cli_abort(c("!" = "The input for the {.var states} must be a matrix with inferred states, built using {.fn mHMMbayes:vit_mHMM()}.",
                    "x" = "You provided an object of class {.cls {class(states)}}."))
   }
   m <- max(states$state)
-  if(!is.null(state_labels) & length(state_labels) != m){
-    len <- length(state_labels)
-    cli::cli_warn(c("The number of elements in {.var state_labels} must be equal to the number of states.",
-                    "i" = "The number of states is {m}.",
-                    "x" = "The number of elements in {.var state_labels} is {len}.",
-                    "i" = "The argument {.var state_labels} will be ignored.")
-    )
-    state_labels <- paste("State", 1:m)
-  }
   if(!is.null(ID)){
     states <- states[states$subj %in% ID,] %>%
       dplyr::mutate(subj = factor(.data$subj, levels = ID))
   }
-  if(is.null(state_labels)){
-    state_labels <- paste("State", 1:m)
-  }
+  state_labels <- paste("State", 1:m)
   states <- states %>%
     dplyr::mutate(state = factor(.data$state,
                                  labels = state_labels)) %>%
@@ -105,12 +90,6 @@ plot_viterbi <- function(states,
       axis.text.y = ggplot2::element_blank(),
       axis.ticks.y = ggplot2::element_blank()
     )
-  if(!is.null(colors)){
-    colors_vec <- colors
-    names(colors_vec) <- state_labels
-    gg <- gg +
-      ggplot2::scale_fill_manual(values = ggplot2::alpha(colors_vec))
-  }
   gg <- gg +
     ggplot2::theme_classic()
   return(gg)

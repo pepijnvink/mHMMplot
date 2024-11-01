@@ -31,7 +31,7 @@ plot_convergence(
 
 \item{ID}{Integer specifying the subject to plot subject specific parameters for.}
 
-\item{state_labels}{Optional character string specifying labels to use for the inferred states.}
+\item{state_labels}{Optional character string specifying labels to use for the states.}
 
 \item{cat_labels}{Optional character string used to specify labels for categories when plotting emission distributions of categorical variables.}
 }

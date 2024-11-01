@@ -4,20 +4,12 @@
 \alias{plot_emiss}
 \title{Plot continuous emission distributions of a Bayesian Multilevel Hidden Markov Model}
 \usage{
-plot_emiss(
-  model = NULL,
-  type = "bar",
-  state_labels = NULL,
-  individual = TRUE,
-  alpha = 0.5
-)
+plot_emiss(model = NULL, type = "bar", individual = TRUE, alpha = 0.5)
 }
 \arguments{
 \item{model}{Object of type `mHMMbayes::mHMM` or `mHMMbayes:mHMM_vary`, created using [mHMMbayes::mHMM()] or [mHMMbayes::mHMM_vary()].}
 
 \item{type}{String specifying the type of plot to return. Currently takes "bar" and "boxplot".}
-
-\item{state_labels}{Optional character vector specifying labels of the states.}
 
 \item{individual}{Logical specifying whether a layer of individual estimates should be plotted.}
 
