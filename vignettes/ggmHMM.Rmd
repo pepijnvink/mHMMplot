@@ -385,4 +385,32 @@ plot_viterbi(
 )
 ```
 
+# Editing plot
+Each plotting function from `ggmHMM` returns an object of type `ggplot`. This means that functions from the `ggplot2` package can be used to customize plots, such as customizing themes.
+The default theme for plots returned by functions in the package is the `classic` theme, for example:
+```{r}
+# Plot transition probabilities
+posterior <- plot_convergence(
+  model = list(nonverbal_out_2st, nonverbal_out_2st_2), # the model to plot
+  component = "gamma", # plot transition probabilities
+  level = "group", # group-level parameters
+  prob = TRUE # plot at probability level (rather than intercept-level)
+)
+posterior
+```
+
+If instead you want to use another theme, such as the `minimal` theme, this can be achieved by simply calling `theme_minimal()` as you usually would:
+```{r}
+posterior + theme_minimal()
+```
+
+Similarly is also possible to add a title and/or customize the axis labels, edit line colors, and more!
+```{r}
+posterior +
+  theme_dark() + # set new theme
+  labs(title = "Trace Plot for Group-Level Transition Probabilities", # add title
+       x = "Iteration", # change x axis title
+       y = "Transition Probability") +# change y axis title
+  scale_color_manual(values=c("green", "orange")) # change colors for each chain
+```
 
