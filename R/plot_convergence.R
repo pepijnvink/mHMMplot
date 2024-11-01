@@ -355,7 +355,7 @@ plot_convergence <- function(model,
     dplyr::mutate(iter = 1:dplyr::n()) %>%
     dplyr::ungroup() %>%
     tidyr::pivot_longer(
-      cols = -c(.data$chain, .data$iter),
+      cols = !c("chain", "iter"),
       names_to = colmns,
       names_pattern = pat
     )
