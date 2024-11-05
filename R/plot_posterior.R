@@ -270,6 +270,6 @@ plot_posterior <- function(model,
     }
   }
   gg <- gg +
-    ggplot2::theme_classic()
+    ggplot2::theme_bw()
   return(gg)
 }
