@@ -377,17 +377,19 @@ plot_viterbi(
 )
 ```
 
-As shown above, the default is to plot infered states for all individuals. In the plot below, the states for only a subset of individuals is plotted.
+As shown above, the default is to plot infered states for all individuals. In the plot below, the states for only a subset of individuals is plotted. We also use the function `scale_fill_manual()` from the `ggplot2` package to give new colors to the states as well as providing custom state labels.
 ```{r}
 plot_viterbi(
   states = states, # dataframe with states
   ID = 1:5 # vector specifying subjects to plot. integer for a single subject is also possible
-)
+) +
+  scale_fill_manual(values = c("red", "green"), # choose new 
+                    labels = c("State One", "State Two"))
 ```
 
 # Editing plot
-Each plotting function from `ggmHMM` returns an object of type `ggplot`. This means that functions from the `ggplot2` package can be used to customize plots, such as customizing themes.
-The default theme for plots returned by functions in the package is the `classic` theme, for example:
+The examples above already teased that plots returned by functions from the package can be easily customized. Each plotting function from `ggmHMM` returns an object of type `ggplot`. This means that functions from the `ggplot2` package can be used to customize plots, such as customizing themes.
+The default theme for plots returned by functions in the package is the `bw` theme, for example:
 ```{r}
 # Plot transition probabilities
 posterior <- plot_convergence(
@@ -399,9 +401,9 @@ posterior <- plot_convergence(
 posterior
 ```
 
-If instead you want to use another theme, such as the `minimal` theme, this can be achieved by simply calling `theme_minimal()` as you usually would:
+If instead you want to use another theme, such as the `classic` theme, this can be achieved by simply calling `theme_classic()` as you usually would:
 ```{r}
-posterior + theme_minimal()
+posterior + theme_classic()
 ```
 
 Similarly is also possible to add a title and/or customize the axis labels, edit line colors, and more!
@@ -411,6 +413,8 @@ posterior +
   labs(title = "Trace Plot for Group-Level Transition Probabilities", # add title
        x = "Iteration", # change x axis title
        y = "Transition Probability") +# change y axis title
-  scale_color_manual(values=c("green", "orange")) # change colors for each chain
+  scale_color_manual(values=c("green", "orange"), # change colors for each chain
+                     labels = c("First Chain", "Second Chain") # customize labels for each chain
+  )
 ```
 
