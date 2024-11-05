@@ -102,6 +102,6 @@ plot_viterbi <- function(states,
       axis.ticks.y = ggplot2::element_blank()
     )
   gg <- gg +
-    ggplot2::theme_classic()
+    ggplot2::theme_bw()
   return(gg)
 }

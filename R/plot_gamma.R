@@ -230,6 +230,6 @@ plot_gamma <- function(model = NULL,
   }
   gg <- gg +
     ggplot2::scale_y_discrete(limits = rev) +
-    ggplot2::theme_classic()
+    ggplot2::theme_bw()
   return(gg)
 }

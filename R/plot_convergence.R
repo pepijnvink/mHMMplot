@@ -445,6 +445,6 @@ plot_convergence <- function(model,
       ggplot2::facet_grid(rows = ggplot2::vars(!!rlang::sym(clnm[[param_name]])))
   }
   gg <- gg +
-    ggplot2::theme_classic()
+    ggplot2::theme_bw()
   return(gg)
 }

@@ -145,6 +145,6 @@ plot_emiss <- function(model = NULL,
     ggplot2::xlab("Mood State") +
     ggplot2::guides(fill = "none",
                     color = "none") +
-    ggplot2::theme_classic()
+    ggplot2::theme_bw()
   return(gg)
 }
