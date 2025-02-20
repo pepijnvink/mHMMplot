@@ -9,6 +9,7 @@
 #' @param ID Integer specifying the subject to plot subject specific parameters for.
 #' @param state_labels Optional character string specifying labels to use for the states.
 #' @param cat_labels Optional character string used to specify labels for categories when plotting emission distributions of categorical variables.
+#' @param alpha Numeric specifying the transparency of the lines in the plot. Default is 1.
 #'
 #' @return Object of type `ggplot2::gg`, plotting parameter distributions.
 #' @export
@@ -73,7 +74,8 @@ plot_convergence <- function(model,
                              prob = FALSE,
                              ID = NULL,
                              state_labels = NULL,
-                             cat_labels = NULL) {
+                             cat_labels = NULL,
+                             alpha = 1) {
   if (inherits(model, c("mHMM", "mHMM_vary"))) {
     model_1 <- model
     model <- list(model)
@@ -89,8 +91,7 @@ plot_convergence <- function(model,
   if (n_chains > 1) {
     list_input <- lapply(model, function(x)
       x$input)
-    all_identical <- Reduce(function(x, y)
-      identical(x, y), list_input)
+    all_identical <- length(unique(list_input)) == 1
     if (!all_identical) {
       cli::cli_abort(
         c("x" = "Not all models you provided are identical", "!" = "Please provide new models")
@@ -308,6 +309,7 @@ plot_convergence <- function(model,
     "emiss_mu_bar" = "State",
     "emiss_varmu_bar" = "State",
     "emiss_sd_bar" = "State",
+    "emiss_var_bar" = "State",
     "emiss_int_subj" = list(c("Category", "State"), c("State", "Category"))[[is_vary+1]],
     "cat_emiss" = c("State", "Category"),
     "cont_emiss" = "State",
@@ -343,6 +345,7 @@ plot_convergence <- function(model,
     "emiss_mu_bar" = "mu_(\\d+)",
     "emiss_varmu_bar" = "varmu_(\\d+)",
     "emiss_sd_bar" = "sd_(\\d+)",
+    "emiss_var_bar" = "var_(\\d+)",
     "emiss_int_subj" = c("int_Emiss(\\d+)_S(\\d+)", "S(\\d+)_int_emiss(\\d+)")[is_vary+1],
     "cat_emiss" = paste0("dep", vrb_ind, "_S(\\d+)_emiss(\\d+)"),
     "cont_emiss" = paste0("dep", vrb_ind, "_S(\\d+)_mu"),
@@ -440,7 +443,7 @@ plot_convergence <- function(model,
       ggplot2::ggplot(mapping = ggplot2::aes(x = .data$iter, y = .data$value))
   }
   gg <-  gg +
-    ggplot2::geom_line()
+    ggplot2::geom_line(alpha = alpha)
   if (length(colmns) == 2) {
     gg <- gg +
       ggplot2::facet_grid(rows = ggplot2::vars(!!rlang::sym(facet[[param_name]][1])),

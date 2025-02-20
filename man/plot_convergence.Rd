@@ -13,7 +13,8 @@ plot_convergence(
   prob = FALSE,
   ID = NULL,
   state_labels = NULL,
-  cat_labels = NULL
+  cat_labels = NULL,
+  alpha = 1
 )
 }
 \arguments{
@@ -34,6 +35,8 @@ plot_convergence(
 \item{state_labels}{Optional character string specifying labels to use for the states.}
 
 \item{cat_labels}{Optional character string used to specify labels for categories when plotting emission distributions of categorical variables.}
+
+\item{alpha}{Numeric specifying the transparency of the lines in the plot. Default is 1.}
 }
 \value{
 Object of type `ggplot2::gg`, plotting parameter distributions.

@@ -5,6 +5,7 @@
 #' @param ID Optional integer or integer vector specifying the subject(s) to plot.
 #' @param digits Integer specifying the number of digits to round to.
 #' @param facet Logical specifying whether subjects should be faceted when plotting subject-specific transition probability matrices.
+#' @param ncol_facet Integer specifying the number of columns in the facet grid when plotting subject-specific transition probability matrices.
 #'
 #' @return
 #' Object of type `ggplot2::gg` with the visualized transition distributions.
@@ -63,7 +64,8 @@ plot_gamma <- function(model = NULL,
                        level = "group",
                        ID = NULL,
                        digits = 2,
-                       facet = TRUE) {
+                       facet = TRUE,
+                       ncol_facet = 2) {
   check_model(
     model,
     classes = c("mHMM", "mHMM_vary", "mHMM_gamma"),
@@ -80,7 +82,11 @@ plot_gamma <- function(model = NULL,
         )
       )
     }
-    gamma_matrix <- mHMMbayes::obtain_gamma(object = model, level = level)
+    if(inherits(model, "mHMM_vary")){
+      gamma_matrix <- obtain_gamma_new(object = model, level = level)
+    } else {
+      gamma_matrix <- mHMMbayes::obtain_gamma(object = model, level = level)
+    }
   } else {
     gamma_matrix <- model
     if (inherits(gamma_matrix, "list")) {
@@ -146,7 +152,7 @@ plot_gamma <- function(model = NULL,
           ) +
           ggplot2::labs(x = "To mood state", y = "From mood state") +
           ggplot2::coord_fixed() +
-          ggplot2::facet_wrap(~Subject) +
+          ggplot2::facet_wrap(~Subject, ncol = ncol_facet) +
           ggplot2::scale_x_discrete(labels = state_labels) +
           ggplot2::scale_y_discrete(labels = state_labels, limits = rev) +
           ggplot2::theme_classic()
