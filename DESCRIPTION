@@ -16,6 +16,7 @@ Imports:
     magrittr,
     mHMMbayes,
     rlang,
+    stats,
     tibble,
     tidyr,
     tidyselect

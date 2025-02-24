@@ -30,7 +30,7 @@ plot_emiss(
 
 \item{alpha}{Numeric value indicating transparency of subject-specific posterior densities.}
 
-\item{Line}{Logical indicating whether to plot lines when plotton individual-level distributions.}
+\item{line}{Logical indicating whether to plot lines when plotton individual-level distributions.}
 }
 \value{
 Object of type `ggplot2::gg` plotting emission distributions.

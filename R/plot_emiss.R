@@ -7,7 +7,7 @@
 #' @param cat_labels Character vector of labels for the categorical variables.
 #' @param alpha Numeric value indicating transparency of subject-specific posterior densities.
 #' @param position Object created with ggplot2::position_jitter indicating the amount of jitter.
-#' @param Line Logical indicating whether to plot lines when plotton individual-level distributions.
+#' @param line Logical indicating whether to plot lines when plotton individual-level distributions.
 #'
 #' @return
 #' Object of type `ggplot2::gg` plotting emission distributions.
