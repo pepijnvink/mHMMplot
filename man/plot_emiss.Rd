@@ -2,24 +2,41 @@
 % Please edit documentation in R/plot_emiss.R
 \name{plot_emiss}
 \alias{plot_emiss}
-\title{Plot continuous emission distributions of a Bayesian Multilevel Hidden Markov Model}
+\title{Plot emission distributions of a Bayesian Multilevel Hidden Markov Model}
 \usage{
-plot_emiss(model = NULL, type = "bar", individual = TRUE, alpha = 0.5)
+plot_emiss(
+  model,
+  type = "bar",
+  distr = "continuous",
+  individual = TRUE,
+  cat_labels = NULL,
+  position = ggplot2::position_jitter(width = 0.2, height = 0),
+  alpha = 0.5,
+  line = FALSE
+)
 }
 \arguments{
 \item{model}{Object of type `mHMMbayes::mHMM` or `mHMMbayes:mHMM_vary`, created using [mHMMbayes::mHMM()] or [mHMMbayes::mHMM_vary()].}
 
 \item{type}{String specifying the type of plot to return. Currently takes "bar" and "boxplot".}
 
+\item{distr}{String specifying the Data Type (i.e. "categorical" or "continuous").}
+
 \item{individual}{Logical specifying whether a layer of individual estimates should be plotted.}
 
+\item{cat_labels}{Character vector of labels for the categorical variables.}
+
+\item{position}{Object created with ggplot2::position_jitter indicating the amount of jitter.}
+
 \item{alpha}{Numeric value indicating transparency of subject-specific posterior densities.}
+
+\item{line}{Logical indicating whether to plot lines when plotton individual-level distributions.}
 }
 \value{
 Object of type `ggplot2::gg` plotting emission distributions.
 }
 \description{
-Plot continuous emission distributions of a Bayesian Multilevel Hidden Markov Model
+Plot emission distributions of a Bayesian Multilevel Hidden Markov Model
 }
 \examples{
 \dontrun{
