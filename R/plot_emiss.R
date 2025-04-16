@@ -201,7 +201,7 @@ plot_emiss <- function(model,
                     color = "none") +
     ggplot2::theme_bw()
   if(distr == "categorical"){
-    gg <- gg + ylab("Probability")
+    gg <- gg + ggplot2::ylab("Probability")
   }
   return(gg)
 }
