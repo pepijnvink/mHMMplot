@@ -7,7 +7,7 @@
 plot_gamma(
   model = NULL,
   level = "group",
-  ID = NULL,
+  subject = NULL,
   digits = 2,
   facet = TRUE,
   ncol_facet = 2
@@ -18,7 +18,7 @@ plot_gamma(
 
 \item{level}{String specifying the level of transition distributions to plot. Options are "group" and "subject".}
 
-\item{ID}{Optional integer or integer vector specifying the subject(s) to plot.}
+\item{subject}{Optional integer or integer vector specifying the subject(s) to plot.}
 
 \item{digits}{Integer specifying the number of digits to round to.}
 

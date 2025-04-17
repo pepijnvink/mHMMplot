@@ -3,7 +3,7 @@
 #' @param model Object of type `mHMMbayes::mHMM` or `mHMMbayes:mHMM_vary`, created using [mHMMbayes::mHMM()] or [mHMMbayes::mHMM_vary()].
 #' @param type String specifying the type of plot to return. Currently takes "bar" and "boxplot".
 #' @param distr String specifying the Data Type (i.e. "categorical" or "continuous").
-#' @param individual Logical specifying whether a layer of individual estimates should be plotted.
+#' @param subject_effects Logical specifying whether a layer of individual estimates should be plotted.
 #' @param cat_labels Character vector of labels for the categorical variables.
 #' @param alpha Numeric value indicating transparency of subject-specific posterior densities.
 #' @param position Object created with ggplot2::position_jitter indicating the amount of jitter.
@@ -65,7 +65,7 @@
 plot_emiss <- function(model,
                        type = "bar",
                        distr = "continuous",
-                       individual = TRUE,
+                       subject_effects = TRUE,
                        cat_labels = NULL,
                        position = ggplot2::position_jitter(width = 0.2, height = 0),
                        alpha = 0.5,
@@ -111,7 +111,7 @@ plot_emiss <- function(model,
       }
       emiss_group_melt <- as.data.frame(emiss_group) %>%
         tibble::rownames_to_column(var = "State") %>%
-        tidyr::pivot_longer(cols = -State, names_to = "Dep", values_to = "Mean") %>%
+        tidyr::pivot_longer(cols = -.data$State, names_to = "Dep", values_to = "Mean") %>%
         dplyr::mutate(State = factor(.data$State, labels = state_labels))
     }
     if(distr == "categorical"){
@@ -120,7 +120,7 @@ plot_emiss <- function(model,
     gg <- ggplot2::ggplot(data = emiss_group_melt,
                           mapping = ggplot2::aes(x = .data$State, y = .data$Mean, fill = .data$Dep)) +
       ggplot2::geom_col()
-    if (individual) {
+    if (subject_effects) {
       if(inherits(model, "mHMM_vary")){
         emiss_subj <- obtain_emiss_new(object = model, level = "subject")[cont_vrbs_ind]
       } else {

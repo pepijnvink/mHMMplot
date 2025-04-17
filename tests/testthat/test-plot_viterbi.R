@@ -4,13 +4,13 @@ data(nonverbal, package = "mHMMbayes")
 test_that("Plotting works",{
   expect_s3_class(plot_viterbi(viterbi), "ggplot")
   expect_s3_class(plot_viterbi(viterbi,
-                               ID = 1:5), "ggplot")
+                               subject = 1:5), "ggplot")
   expect_s3_class(plot_viterbi(viterbi,
-                               ID = 1), "ggplot")
+                               subject = 1), "ggplot")
   ## provide mHMM object
   expect_s3_class(plot_viterbi(states = out_2st_cat,
                                s_data = nonverbal,
-                               ID = 1:5), "ggplot")
+                               subject = 1:5), "ggplot")
 }
                     )
 test_that("Warning and errors",{

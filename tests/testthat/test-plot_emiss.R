@@ -4,7 +4,7 @@ test_that("Obtain plots", {
                              type = "bar"), "ggplot")
   expect_s3_class(plot_emiss(out_3st_cont,
                              type = "bar",
-                             individual = TRUE,
+                             subject_effects = TRUE,
                              alpha = 0.5), "ggplot")
   expect_s3_class(plot_emiss(out_3st_cont,
                              type = "boxplot"), "ggplot")
