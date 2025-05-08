@@ -1,6 +1,6 @@
 #' Heat Plot for Transition Probability Matrix of a Bayesian Multilevel Hidden Markov Model
 #'
-#' @param model Object of type `mHMMbayes::mHMM`, `mHMMbayes::mHMM_vary`, or `mHMMbayes::mHMM_gamma`, created using [mHMMbayes::mHMM()], [mHMMbayes::mHMM_vary()], [mHMMbayes::obtain_gamma()].
+#' @param model Object of type `mHMMbayes::mHMM` or `mHMMbayes::mHMM_gamma`, created using [mHMMbayes::mHMM()] or [mHMMbayes::obtain_gamma()].
 #' @param level String specifying the level of transition distributions to plot. Options are "group" and "subject".
 #' @param subject Optional integer or integer vector specifying the subject(s) to plot.
 #' @param digits Integer specifying the number of digits to round to.
@@ -68,10 +68,10 @@ plot_gamma <- function(model = NULL,
                        ncol_facet = 2) {
   check_model(
     model,
-    classes = c("mHMM", "mHMM_vary", "mHMM_gamma"),
-    fns = c("mHMM", "mHMM_vary", "obtain_gamma")
+    classes = c("mHMM", "mHMM_gamma"),
+    fns = c("mHMM", "obtain_gamma")
   )
-  if (inherits(model, c("mHMM", "mHMM_vary"))) {
+  if (inherits(model, "mHMM")) {
     m <- model$input$m
     nsubj <- model$input$n_subj
     if (is.null(level) | !(level %in% c("group", "subject"))) {
@@ -82,11 +82,7 @@ plot_gamma <- function(model = NULL,
         )
       )
     }
-    if(inherits(model, "mHMM_vary")){
-      gamma_matrix <- obtain_gamma_new(object = model, level = level)
-    } else {
-      gamma_matrix <- mHMMbayes::obtain_gamma(object = model, level = level)
-    }
+    gamma_matrix <- mHMMbayes::obtain_gamma(object = model, level = level)
   } else {
     gamma_matrix <- model
     if (inherits(gamma_matrix, "list")) {

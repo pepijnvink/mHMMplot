@@ -14,7 +14,7 @@ plot_gamma(
 )
 }
 \arguments{
-\item{model}{Object of type `mHMMbayes::mHMM`, `mHMMbayes::mHMM_vary`, or `mHMMbayes::mHMM_gamma`, created using [mHMMbayes::mHMM()], [mHMMbayes::mHMM_vary()], [mHMMbayes::obtain_gamma()].}
+\item{model}{Object of type `mHMMbayes::mHMM` or `mHMMbayes::mHMM_gamma`, created using [mHMMbayes::mHMM()] or [mHMMbayes::obtain_gamma()].}
 
 \item{level}{String specifying the level of transition distributions to plot. Options are "group" and "subject".}
 

@@ -18,7 +18,7 @@ plot_trace(
 )
 }
 \arguments{
-\item{model}{Object or a list of objects of type `mHMMbayes::mHMM` or `mHMMbayes:mHMM_vary`, created using [mHMMbayes::mHMM()] or [mHMMbayes::mHMM_vary()].}
+\item{model}{Object or a list of objects of type `mHMMbayes::mHMM` created using [mHMMbayes::mHMM()].}
 
 \item{component}{Character string specifying the component to plot. Takes "gamma" or "emiss".}
 

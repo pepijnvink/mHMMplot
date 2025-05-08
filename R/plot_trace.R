@@ -1,6 +1,6 @@
 #' Plot trace plots to assess convergence of a Bayesian Multilevel Hidden Markov Model
 #'
-#' @param model Object or a list of objects of type `mHMMbayes::mHMM` or `mHMMbayes:mHMM_vary`, created using [mHMMbayes::mHMM()] or [mHMMbayes::mHMM_vary()].
+#' @param model Object or a list of objects of type `mHMMbayes::mHMM` created using [mHMMbayes::mHMM()].
 #' @param component Character string specifying the component to plot. Takes "gamma" or "emiss".
 #' @param param Optional character string specifying the parameter to plot for the plotted component. If `NULL` (default), plots the means (or probabilities). Takes "var" for between-person variances, "sd" for standard deviations of normal emission distributions, and "beta" for regression coefficients.
 #' @param level Character string specifying the level of parameter to plot. Takes "group" or "subject".
@@ -76,15 +76,15 @@ plot_trace <- function(model,
                              state_labels = NULL,
                              cat_labels = NULL,
                              alpha = 1) {
-  if (inherits(model, c("mHMM", "mHMM_vary"))) {
+  if (inherits(model, "mHMM")) {
     model_1 <- model
     model <- list(model)
   }
   lapply(model, function(x) {
     check_model(
       x,
-      classes = c("mHMM", "mHMM_vary"),
-      fns = c("mHMM", "mHMM_vary")
+      classes = "mHMM",
+      fns = "mHMM"
     )
   })
   n_chains <- length(model)
@@ -100,7 +100,6 @@ plot_trace <- function(model,
       model_1 <- model[[1]]
     }
   }
-  is_mhmm_vary <- inherits(model_1, "mHMM_vary")
   if (is.null(level)) {
     cli::cli_abort(
       c("x" = "{.var level} specifying the level to plot has not been specified.", "!" = "Please specify 'group' to plot the group-level parameters, or 'subject' to plot the subject level parameters.")
@@ -197,7 +196,7 @@ plot_trace <- function(model,
         "continuous" = c(
           "emiss" = "emiss_mu_bar",
           "emiss_var" = "emiss_varmu_bar",
-          "emiss_sd" = c("emiss_sd_bar", "emiss_var_bar")[is_mhmm_vary + 1],
+          "emiss_sd" = "emiss_sd_bar",
           "emiss_beta" = "emiss_cov_bar"
         ),
         "count" = c(
@@ -300,17 +299,16 @@ plot_trace <- function(model,
   obj <- obj %>%
     dplyr::bind_rows(.id = "chain") %>%
     dplyr::mutate(chain = factor(.data$chain, labels = paste("Chain", 1:n_chains)))
-  is_vary <- inherits(model_1, "mHMM_vary")
   clnm <- list(
-    "emiss_int_bar" = list(c("Category", "State"), c("State", "Category"))[[is_vary+1]],
-    "emiss_prob_bar" = list(c("Category", "State"), c("State", "Category"))[[is_vary+1]],
+    "emiss_int_bar" = c("Category", "State"),
+    "emiss_prob_bar" = c("Category", "State"),
     "emiss_V_int_bar" = c("Category", "State"),
     "emiss_cov_bar",
     "emiss_mu_bar" = "State",
     "emiss_varmu_bar" = "State",
     "emiss_sd_bar" = "State",
     "emiss_var_bar" = "State",
-    "emiss_int_subj" = list(c("Category", "State"), c("State", "Category"))[[is_vary+1]],
+    "emiss_int_subj" = c("Category", "State"),
     "cat_emiss" = c("State", "Category"),
     "cont_emiss" = "State",
     "count_emiss",
@@ -338,15 +336,15 @@ plot_trace <- function(model,
     vrb_ind <- 1
   }
   ptrns <- c(
-    "emiss_int_bar" = c("int_Emiss(\\d+)_S(\\d+)","S(\\d+)_int_emiss(\\d+)")[is_vary+1],
-    "emiss_prob_bar" = c("Emiss(\\d+)_S(\\d+)", "S(\\d+)_emiss(\\d+)")[is_vary+1],
+    "emiss_int_bar" = "int_Emiss(\\d+)_S(\\d+)",
+    "emiss_prob_bar" = "Emiss(\\d+)_S(\\d+)",
     "emiss_V_int_bar" = "var_int_Emiss(\\d+)_S(\\d+)",
     "emiss_cov_bar",
     "emiss_mu_bar" = "mu_(\\d+)",
     "emiss_varmu_bar" = "varmu_(\\d+)",
     "emiss_sd_bar" = "sd_(\\d+)",
     "emiss_var_bar" = "var_(\\d+)",
-    "emiss_int_subj" = c("int_Emiss(\\d+)_S(\\d+)", "S(\\d+)_int_emiss(\\d+)")[is_vary+1],
+    "emiss_int_subj" = "int_Emiss(\\d+)_S(\\d+)",
     "cat_emiss" = paste0("dep", vrb_ind, "_S(\\d+)_emiss(\\d+)"),
     "cont_emiss" = paste0("dep", vrb_ind, "_S(\\d+)_mu"),
     "count_emiss",
