@@ -66,7 +66,7 @@ plot_emiss <- function(model,
                        subject_effects = TRUE,
                        cat_labels = NULL,
                        position = ggplot2::position_jitter(width = 0.2, height = 0),
-                       alpha = 0.5,
+                       alpha = 0.75,
                        line = FALSE) {
   check_model(model, classes = "mHMM")
   m <- model$input$m
@@ -88,7 +88,8 @@ plot_emiss <- function(model,
         tibble::rownames_to_column(var = "State")
     }) %>%
       dplyr::bind_rows(.id = "Dep") %>%
-      dplyr::mutate(State = factor(.data$State, labels = state_labels))
+      dplyr::mutate(State = factor(.data$State, labels = state_labels),
+                    Dep = factor(.data$Dep, labels = vrb, levels = vrb))
     } else {
       emiss_group <- emiss_group[[1]]
       rownames(emiss_group) <- paste0(1:m)
@@ -101,7 +102,8 @@ plot_emiss <- function(model,
       emiss_group_melt <- as.data.frame(emiss_group) %>%
         tibble::rownames_to_column(var = "State") %>%
         tidyr::pivot_longer(cols = -.data$State, names_to = "Dep", values_to = "Mean") %>%
-        dplyr::mutate(State = factor(.data$State, labels = state_labels))
+        dplyr::mutate(State = factor(.data$State, labels = state_labels),
+                      Dep = factor(.data$Dep, labels = vrb, levels = vrb))
     }
     if(distr == "categorical"){
       emiss_group_melt$Dep <- factor(emiss_group_melt$Dep, labels = vrb)
@@ -150,7 +152,8 @@ plot_emiss <- function(model,
           ggplot2::geom_line(
             data = gg_emiss_subject,
             mapping = ggplot2::aes(x = .data$State, y = .data$Mean, group = .data$Subj),
-            alpha = alpha
+            alpha = alpha,
+            color = "grey"
           )
       }
 
