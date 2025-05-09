@@ -8,7 +8,7 @@ test_that("mHMM Object", {
                              level = "group"), "ggplot")
   expect_s3_class(plot_gamma(out_3st_cont,
                              level = "subject",
-                             ID = 1:5), "ggplot")
+                             subject = 1:5), "ggplot")
   expect_s3_class(plot_gamma(out_3st_cont,
                              level = "subject"), "ggplot")
   expect_s3_class(plot_gamma(out_3st_cont,

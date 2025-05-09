@@ -1,15 +1,15 @@
 #' Plot trace plots to assess convergence of a Bayesian Multilevel Hidden Markov Model
 #'
-#' @param model Object or a list of objects of type `mHMMbayes::mHMM` or `mHMMbayes:mHMM_vary`, created using [mHMMbayes::mHMM()] or [mHMMbayes::mHMM_vary()].
+#' @param model Object or a list of objects of type `mHMMbayes::mHMM` created using [mHMMbayes::mHMM()].
 #' @param component Character string specifying the component to plot. Takes "gamma" or "emiss".
 #' @param param Optional character string specifying the parameter to plot for the plotted component. If `NULL` (default), plots the means (or probabilities). Takes "var" for between-person variances, "sd" for standard deviations of normal emission distributions, and "beta" for regression coefficients.
 #' @param level Character string specifying the level of parameter to plot. Takes "group" or "subject".
 #' @param vrb Optional character string specifying the variable to plot when plotting categorical emission distributions.
 #' @param prob Logical specifying whether converence of transitions or categorical emissions should be plotted on the probability scale, rather than the log scale.
-#' @param ID Integer specifying the subject to plot subject specific parameters for.
+#' @param subject Integer specifying the subject to plot subject specific parameters for.
 #' @param state_labels Optional character string specifying labels to use for the states.
 #' @param cat_labels Optional character string used to specify labels for categories when plotting emission distributions of categorical variables.
-#' @param alpha Numeric specifying the transparency of the lines in the plot. Default is 1.
+#' @param alpha Numeric value specifying the transparency of the lines in the plot. Default is 1.
 #'
 #' @return Object of type `ggplot2::gg`, plotting parameter distributions.
 #' @export
@@ -61,30 +61,30 @@
 #'                          emiss_hyp_prior = manual_prior_emiss,
 #'                          mcmc = list(J = 11, burn_in = 5))
 #'
-#' plot_convergence(model = out_3st_cont_sim,
+#' plot_trace(model = out_3st_cont_sim,
 #'               param = "gamma",
 #'               level = "group",
 #'               prob = TRUE)
 #' }
-plot_convergence <- function(model,
+plot_trace <- function(model,
                              component = "gamma",
                              param = NULL,
                              level = "group",
                              vrb = NULL,
                              prob = FALSE,
-                             ID = NULL,
+                             subject = NULL,
                              state_labels = NULL,
                              cat_labels = NULL,
                              alpha = 1) {
-  if (inherits(model, c("mHMM", "mHMM_vary"))) {
+  if (inherits(model, "mHMM")) {
     model_1 <- model
     model <- list(model)
   }
   lapply(model, function(x) {
     check_model(
       x,
-      classes = c("mHMM", "mHMM_vary"),
-      fns = c("mHMM", "mHMM_vary")
+      classes = "mHMM",
+      fns = "mHMM"
     )
   })
   n_chains <- length(model)
@@ -100,7 +100,6 @@ plot_convergence <- function(model,
       model_1 <- model[[1]]
     }
   }
-  is_mhmm_vary <- inherits(model_1, "mHMM_vary")
   if (is.null(level)) {
     cli::cli_abort(
       c("x" = "{.var level} specifying the level to plot has not been specified.", "!" = "Please specify 'group' to plot the group-level parameters, or 'subject' to plot the subject level parameters.")
@@ -113,11 +112,11 @@ plot_convergence <- function(model,
   if (level %nin% c("group", "subject")) {
     cli::cli_abort("x" = "{.val {level}} is not a valid input for {.var level}.", "i" = "Valid inputs are {.val group} or {.val subject}.")
   }
-  if (is.null(ID) & level == "subject") {
+  if (is.null(subject) & level == "subject") {
     cli::cli_abort(
       c(
-        "{.code plot_convergence} needs an ID specifying the subject to plot when plotting subject-specific parameters.",
-        "i" = "Please provide an ID indicator using the {.var ID} argument, or specify {.code level = {.val group}}."
+        "{.code plot_convergence} needs an indicator specifying the subject to plot when plotting subject-specific parameters.",
+        "i" = "Please provide a subject indicator using the {.var subject} argument, or specify {.code level = {.val group}}."
       )
     )
   }
@@ -133,11 +132,11 @@ plot_convergence <- function(model,
   }
   m <- model_1$input$m
   vrb_ind <- NULL
-  if(!is.null(ID) & level == "group"){
+  if(!is.null(subject) & level == "group"){
     cli::cli_warn(
       c(
-        "You provided an ID number while plotting group-level distributions.",
-        "i" = "The ID number you provided will be ignored."
+        "You provided a subject indicator while plotting group-level distributions.",
+        "i" = "The subject indicator you provided will be ignored."
       )
     )
   }
@@ -197,7 +196,7 @@ plot_convergence <- function(model,
         "continuous" = c(
           "emiss" = "emiss_mu_bar",
           "emiss_var" = "emiss_varmu_bar",
-          "emiss_sd" = c("emiss_sd_bar", "emiss_var_bar")[is_mhmm_vary + 1],
+          "emiss_sd" = "emiss_sd_bar",
           "emiss_beta" = "emiss_cov_bar"
         ),
         "count" = c(
@@ -249,7 +248,7 @@ plot_convergence <- function(model,
   param_name <- allparams[param_comb]
   if (param_name %in% c("trans_prob", "cat_emiss", "cont_emiss", "count_emiss")) {
     obj <- lapply(model, function(x) {
-      x[["PD_subj"]][[ID]][[param_name]] %>%
+      x[["PD_subj"]][[subject]][[param_name]] %>%
         tibble::as_tibble(.name_repair = "minimal")
     })
     if (param_name %in% c("cat_emiss", "cont_emiss", "count_emiss")) {
@@ -266,7 +265,7 @@ plot_convergence <- function(model,
     }
   } else if (param_name == "emiss_int_subj") {
     obj <- lapply(model, function(x) {
-      x[[param_name]][[ID]][[vrb]] %>%
+      x[[param_name]][[subject]][[vrb]] %>%
         tibble::as_tibble(.name_repair = "minimal")
     })
   } else if (param_name %in% c(
@@ -283,12 +282,12 @@ plot_convergence <- function(model,
     })
   } else if (param_name == "gamma_int_subj") {
     obj <- lapply(model, function(x) {
-      x[[param_name]][[ID]] %>%
+      x[[param_name]][[subject]] %>%
         tibble::as_tibble(.name_repair = "minimal")
     })
   } else if (param_name == "emiss_int_subj") {
     obj <- lapply(model, function(x) {
-      x[[param_name]][[ID]][[vrb]] %>%
+      x[[param_name]][[subject]][[vrb]] %>%
         tibble::as_tibble(.name_repair = "minimal")
     })
   } else {
@@ -300,17 +299,16 @@ plot_convergence <- function(model,
   obj <- obj %>%
     dplyr::bind_rows(.id = "chain") %>%
     dplyr::mutate(chain = factor(.data$chain, labels = paste("Chain", 1:n_chains)))
-  is_vary <- inherits(model_1, "mHMM_vary")
   clnm <- list(
-    "emiss_int_bar" = list(c("Category", "State"), c("State", "Category"))[[is_vary+1]],
-    "emiss_prob_bar" = list(c("Category", "State"), c("State", "Category"))[[is_vary+1]],
+    "emiss_int_bar" = c("Category", "State"),
+    "emiss_prob_bar" = c("Category", "State"),
     "emiss_V_int_bar" = c("Category", "State"),
     "emiss_cov_bar",
     "emiss_mu_bar" = "State",
     "emiss_varmu_bar" = "State",
     "emiss_sd_bar" = "State",
     "emiss_var_bar" = "State",
-    "emiss_int_subj" = list(c("Category", "State"), c("State", "Category"))[[is_vary+1]],
+    "emiss_int_subj" = c("Category", "State"),
     "cat_emiss" = c("State", "Category"),
     "cont_emiss" = "State",
     "count_emiss",
@@ -338,15 +336,15 @@ plot_convergence <- function(model,
     vrb_ind <- 1
   }
   ptrns <- c(
-    "emiss_int_bar" = c("int_Emiss(\\d+)_S(\\d+)","S(\\d+)_int_emiss(\\d+)")[is_vary+1],
-    "emiss_prob_bar" = c("Emiss(\\d+)_S(\\d+)", "S(\\d+)_emiss(\\d+)")[is_vary+1],
+    "emiss_int_bar" = "int_Emiss(\\d+)_S(\\d+)",
+    "emiss_prob_bar" = "Emiss(\\d+)_S(\\d+)",
     "emiss_V_int_bar" = "var_int_Emiss(\\d+)_S(\\d+)",
     "emiss_cov_bar",
     "emiss_mu_bar" = "mu_(\\d+)",
     "emiss_varmu_bar" = "varmu_(\\d+)",
     "emiss_sd_bar" = "sd_(\\d+)",
     "emiss_var_bar" = "var_(\\d+)",
-    "emiss_int_subj" = c("int_Emiss(\\d+)_S(\\d+)", "S(\\d+)_int_emiss(\\d+)")[is_vary+1],
+    "emiss_int_subj" = "int_Emiss(\\d+)_S(\\d+)",
     "cat_emiss" = paste0("dep", vrb_ind, "_S(\\d+)_emiss(\\d+)"),
     "cont_emiss" = paste0("dep", vrb_ind, "_S(\\d+)_mu"),
     "count_emiss",

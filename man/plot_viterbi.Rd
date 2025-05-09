@@ -4,14 +4,14 @@
 \alias{plot_viterbi}
 \title{Plot inferred states of a Bayesian Multilevel Hidden Markov Model}
 \usage{
-plot_viterbi(states, s_data, ID = NULL)
+plot_viterbi(states, s_data, subject = NULL)
 }
 \arguments{
 \item{states}{Data Frame with inferred states obtained using [mHMMbayes::vit_HMM()] or object of class `mHMMbayes:mHMM`.}
 
 \item{s_data}{Data Frame with data used to infer states using the viterbi algorithm. Only required when the object given to `states` is of class `mHMMbayes::mHMM`.}
 
-\item{ID}{Optional numeric vector with indices of subjects to plot.}
+\item{subject}{Optional numeric vector with indices of subjects to plot.}
 }
 \value{
 Object of type `ggplot2::gg` with the plotted inferred states over time.

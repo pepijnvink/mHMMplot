@@ -2,7 +2,7 @@
 #'
 #' @param states Data Frame with inferred states obtained using [mHMMbayes::vit_HMM()] or object of class `mHMMbayes:mHMM`.
 #' @param s_data Data Frame with data used to infer states using the viterbi algorithm. Only required when the object given to `states` is of class `mHMMbayes::mHMM`.
-#' @param ID Optional numeric vector with indices of subjects to plot.
+#' @param subject Optional numeric vector with indices of subjects to plot.
 #'
 #' @return
 #' Object of type `ggplot2::gg` with the plotted inferred states over time.
@@ -61,7 +61,7 @@
 #' }
 plot_viterbi <- function(states,
                          s_data,
-                         ID = NULL){
+                         subject = NULL){
   if(inherits(states, "mHMM")){
     if(is.null(s_data)){
       cli::cli_abort("x" =  "You provided an object of class {.cls mHMM} without a data frame with data to obtain states for.",
@@ -76,9 +76,9 @@ plot_viterbi <- function(states,
                    "x" = "You provided an object of class {.cls {class(states)}}."))
   }
   m <- max(states$state)
-  if(!is.null(ID)){
-    states <- states[states$subj %in% ID,] %>%
-      dplyr::mutate(subj = factor(.data$subj, levels = ID))
+  if(!is.null(subject)){
+    states <- states[states$subj %in% subject,] %>%
+      dplyr::mutate(subj = factor(.data$subj, levels = subject))
   }
   state_labels <- paste("State", 1:m)
   states <- states %>%

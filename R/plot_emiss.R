@@ -1,9 +1,8 @@
 #' Plot emission distributions of a Bayesian Multilevel Hidden Markov Model
 #'
-#' @param model Object of type `mHMMbayes::mHMM` or `mHMMbayes:mHMM_vary`, created using [mHMMbayes::mHMM()] or [mHMMbayes::mHMM_vary()].
+#' @param model Object of type `mHMMbayes::mHMM`, created using [mHMMbayes::mHMM()].
 #' @param type String specifying the type of plot to return. Currently takes "bar" and "boxplot".
-#' @param distr String specifying the Data Type (i.e. "categorical" or "continuous").
-#' @param individual Logical specifying whether a layer of individual estimates should be plotted.
+#' @param subject_effects Logical specifying whether a layer of individual estimates should be plotted.
 #' @param cat_labels Character vector of labels for the categorical variables.
 #' @param alpha Numeric value indicating transparency of subject-specific posterior densities.
 #' @param position Object created with ggplot2::position_jitter indicating the amount of jitter.
@@ -64,29 +63,19 @@
 #' }
 plot_emiss <- function(model,
                        type = "bar",
-                       distr = "continuous",
-                       individual = TRUE,
+                       subject_effects = TRUE,
                        cat_labels = NULL,
                        position = ggplot2::position_jitter(width = 0.2, height = 0),
                        alpha = 0.5,
                        line = FALSE) {
-  check_model(model, classes = c("mHMM", "mHMM_vary"))
+  check_model(model, classes = "mHMM")
   m <- model$input$m
   n_subj <- model$input$n_subj
   state_labels <- paste("State", 1:m)
-  if(inherits(model, "mHMM_vary")){
-    cont_vrbs_ind <- which(model$input$data_distr == distr)
-    n_dep <- length(cont_vrbs_ind)
-  } else {
-    cont_vrbs_ind <- 1:model$input$n_dep
-    n_dep <- model$input$n_dep
-  }
+  distr <- model$input$data_distr
+  n_dep <- model$input$n_dep
   if (type == "bar") {
-    if(inherits(model, "mHMM_vary")){
-      emiss_group <- obtain_emiss_new(object = model, level = "group")[cont_vrbs_ind]
-    } else {
-      emiss_group <- mHMMbayes::obtain_emiss(object = model, level = "group")[cont_vrbs_ind]
-    }
+    emiss_group <- mHMMbayes::obtain_emiss(object = model, level = "group")
     if(distr == "continuous"){
     vrb <- names(emiss_group)
     emiss_group <- lapply(emiss_group, function(x, m) {
@@ -111,7 +100,7 @@ plot_emiss <- function(model,
       }
       emiss_group_melt <- as.data.frame(emiss_group) %>%
         tibble::rownames_to_column(var = "State") %>%
-        tidyr::pivot_longer(cols = -State, names_to = "Dep", values_to = "Mean") %>%
+        tidyr::pivot_longer(cols = -.data$State, names_to = "Dep", values_to = "Mean") %>%
         dplyr::mutate(State = factor(.data$State, labels = state_labels))
     }
     if(distr == "categorical"){
@@ -120,12 +109,8 @@ plot_emiss <- function(model,
     gg <- ggplot2::ggplot(data = emiss_group_melt,
                           mapping = ggplot2::aes(x = .data$State, y = .data$Mean, fill = .data$Dep)) +
       ggplot2::geom_col()
-    if (individual) {
-      if(inherits(model, "mHMM_vary")){
-        emiss_subj <- obtain_emiss_new(object = model, level = "subject")[cont_vrbs_ind]
-      } else {
-        emiss_subj <- mHMMbayes::obtain_emiss(object = model, level = "subject")[cont_vrbs_ind]
-      }
+    if (subject_effects) {
+      emiss_subj <- mHMMbayes::obtain_emiss(object = model, level = "subject")
       gg_emiss_subject <- data.frame(
         Subj = rep(rep(1:n_subj, each = m), n_dep),
         State = factor(rep(1:m, n_subj * n_dep), labels = state_labels),
@@ -171,7 +156,7 @@ plot_emiss <- function(model,
 
     }
   } else if(type == "boxplot"){
-    emiss_subj <- mHMMbayes::obtain_emiss(object = model, level = "subject")[cont_vrbs_ind]
+    emiss_subj <- mHMMbayes::obtain_emiss(object = model, level = "subject")
     vrb <- names(emiss_subj)
     gg_emiss_subject <- data.frame(
       Subj = rep(rep(1:n_subj, each = m), n_dep),
@@ -201,7 +186,7 @@ plot_emiss <- function(model,
                     color = "none") +
     ggplot2::theme_bw()
   if(distr == "categorical"){
-    gg <- gg + ylab("Probability")
+    gg <- gg + ggplot2::ylab("Probability")
   }
   return(gg)
 }

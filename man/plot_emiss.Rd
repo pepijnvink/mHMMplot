@@ -7,8 +7,7 @@
 plot_emiss(
   model,
   type = "bar",
-  distr = "continuous",
-  individual = TRUE,
+  subject_effects = TRUE,
   cat_labels = NULL,
   position = ggplot2::position_jitter(width = 0.2, height = 0),
   alpha = 0.5,
@@ -16,13 +15,11 @@ plot_emiss(
 )
 }
 \arguments{
-\item{model}{Object of type `mHMMbayes::mHMM` or `mHMMbayes:mHMM_vary`, created using [mHMMbayes::mHMM()] or [mHMMbayes::mHMM_vary()].}
+\item{model}{Object of type `mHMMbayes::mHMM`, created using [mHMMbayes::mHMM()].}
 
 \item{type}{String specifying the type of plot to return. Currently takes "bar" and "boxplot".}
 
-\item{distr}{String specifying the Data Type (i.e. "categorical" or "continuous").}
-
-\item{individual}{Logical specifying whether a layer of individual estimates should be plotted.}
+\item{subject_effects}{Logical specifying whether a layer of individual estimates should be plotted.}
 
 \item{cat_labels}{Character vector of labels for the categorical variables.}
 

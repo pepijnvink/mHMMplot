@@ -156,12 +156,12 @@ out_3st_cont <- mHMM(s_data = data_cont$obs,
 
 
 # Evaluate Convergence
-We will start by evaluating convergence at the group level using trace plots. We can do this using `plot_convergence()`. We will start with trace plots for gamma (i.e. the transition probabilities):
+We will start by evaluating convergence at the group level using trace plots. We can do this using `plot_trace()`. We will start with trace plots for gamma (i.e. the transition probabilities):
 
 We first look at plotting the intercepts over iterations, corresponding to the transition probabilities:
 
 ```{r plot gamma-group intercept}
-plot_convergence(
+plot_trace(
   model = nonverbal_out_2st, # the model to plot
   component = "gamma", # plot transition probabilities
   level = "group", # group-level parameters
@@ -171,7 +171,7 @@ plot_convergence(
 We can also choose to plot it on the probability scale, rather than intercept scale, by including `prob = TRUE`:
 
 ```{r plot gamma-group prob}
-plot_convergence(
+plot_trace(
   model = nonverbal_out_2st, # the model to plot
   component = "gamma", # plot transition probabilities
   level = "group", # group-level parameters
@@ -181,7 +181,7 @@ plot_convergence(
 
 We can also plot the group-level variances instead of probabilities. To do this, we specify `param = "var"`:
 ```{r plot gamma-var prob}
-plot_convergence(
+plot_trace(
   model = nonverbal_out_2st, # the model to plot
   component = "gamma", # plot transition probabilities
   param = "var", # plot group_level variances
@@ -192,7 +192,7 @@ plot_convergence(
 If, rather than transition probabilities, you want to obtain trace plots for the emission distribution, you specify `component = "emiss"` and a variable to plot:
 
 ```{r plot emiss-group}
-plot_convergence(
+plot_trace(
   model = nonverbal_out_2st, # the model to plot
   component = "emiss", # plot transition probabilities
   vrb = "p_looking", # variable to plot
@@ -203,24 +203,24 @@ plot_convergence(
 
 If, instead of group-level you want to plot subject-level trace plots, you simply specify `level = "subject"` and provide a subject ID to plot using the argument `ID`. So if we want to plot the emission probabilities of the variable `p_looking` for subject `8`, we specify:
 ```{r plot emiss-subj}
-plot_convergence(
+plot_trace(
   model = nonverbal_out_2st, # the model to plot
   component = "emiss", # plot transition probabilities
   vrb = "p_looking", # variable to plot
   level = "subject", # subject-level parameters
-  ID = 8, # subject to plot for
+  subject = 8, # subject to plot for
   prob = TRUE # specify FALSE to plot on intercept scale instead
 )
 ```
 
-The default in `plot_convergence()` is to label the categories and states using numbers. However it is possible to provide state labels using the `state_labels` argument (and for categorical emissions, category labels using the `cat_labels` argument). These can be specified as follows:
+The default in `plot_trace()` is to label the categories and states using numbers. However it is possible to provide state labels using the `state_labels` argument (and for categorical emissions, category labels using the `cat_labels` argument). These can be specified as follows:
 ```{r plot emiss-subj labeled}
-plot_convergence(
+plot_trace(
   model = nonverbal_out_2st, # the model to plot
   component = "emiss", # plot transition probabilities
   vrb = "p_looking", # variable to plot
   level = "subject", # subject-level parameters
-  ID = 8, # subject to plot for
+  subject = 8, # subject to plot for
   state_labels = c("Patient Speaking State", "Patient Listening State"),
   cat_labels = c("No Looking", "Looking"),
   prob = TRUE # specify FALSE to plot on intercept scale instead
@@ -229,13 +229,13 @@ plot_convergence(
 
 It is also possible to plot multiple chains simultaneously. This can be done by probiding a list of `mHMMbayes::mmHMM` objects:
 ```{r plot emiss-subj labeled twochains}
-plot_convergence(
+plot_trace(
   model = list(nonverbal_out_2st,
                nonverbal_out_2st_2), # list of models to plot
   component = "emiss", # plot transition probabilities
   vrb = "p_looking", # variable to plot
   level = "subject", # subject-level parameters
-  ID = 8, # subject to plot for
+  subject = 8, # subject to plot for
   state_labels = c("Patient Speaking State", "Patient Listening State"),
   cat_labels = c("No Looking", "Looking"),
   prob = TRUE # specify FALSE to plot on intercept scale instead
@@ -248,7 +248,7 @@ plot_convergence(
 plot_emiss(
   model = out_3st_cont, # specify model to plot
   type = "bar", # obtain a bar chart
-  individual = FALSE # do not overlay individual-level points
+  subject_effects = FALSE # do not overlay individual-level points
 )
 ```
 
@@ -257,7 +257,7 @@ When we choose a bar plot, we can also choose to overlay the subject-level estim
 plot_emiss(
   model = out_3st_cont, # specify model to plot
   type = "bar", # obtain a bar chart
-  individual = TRUE, # do not overlay individual-level points
+  subject_effects = TRUE, # do not overlay individual-level points
   alpha = 0.5 # specify transparency of points
 )
 ```
@@ -289,12 +289,12 @@ plot_gamma(
 )
 ```
 
-To only plot transition probabilities for a subset of individuals, you can provide an integer (or integer vector) to the argument `ID`, specifying the subject indices:
+To only plot transition probabilities for a subset of individuals, you can provide an integer (or integer vector) to the argument `subject`, specifying the subject indices:
 ```{r}
 plot_gamma(
   model = nonverbal_out_2st, # mHMM model
   level = "subject", #plot subject level
-  ID = 1:5, # only plot for subjects 1 to 5
+  subject = 1:5, # only plot for subjects 1 to 5
   facet = TRUE
 )
 ```
@@ -304,7 +304,7 @@ The default for subject level heat plots is to show separate plots for each subj
 plot_gamma(
   model = nonverbal_out_2st, # mHMM model
   level = "subject", #plot subject level
-  ID = 1:5, # only plot for subjects 1 to 5
+  subject = 1:5, # only plot for subjects 1 to 5
   facet = FALSE # do not facet
 )
 ```
@@ -381,7 +381,7 @@ As shown above, the default is to plot infered states for all individuals. In th
 ```{r}
 plot_viterbi(
   states = states, # dataframe with states
-  ID = 1:5 # vector specifying subjects to plot. integer for a single subject is also possible
+  subject = 1:5 # vector specifying subjects to plot. integer for a single subject is also possible
 ) +
   scale_fill_manual(values = c("red", "green"), # choose new 
                     labels = c("State One", "State Two"))
@@ -392,7 +392,7 @@ The examples above already teased that plots returned by functions from the pack
 The default theme for plots returned by functions in the package is the `bw` theme, for example:
 ```{r}
 # Plot transition probabilities
-posterior <- plot_convergence(
+posterior <- plot_trace(
   model = list(nonverbal_out_2st, nonverbal_out_2st_2), # the model to plot
   component = "gamma", # plot transition probabilities
   level = "group", # group-level parameters

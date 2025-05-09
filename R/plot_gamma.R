@@ -1,8 +1,8 @@
 #' Heat Plot for Transition Probability Matrix of a Bayesian Multilevel Hidden Markov Model
 #'
-#' @param model Object of type `mHMMbayes::mHMM`, `mHMMbayes::mHMM_vary`, or `mHMMbayes::mHMM_gamma`, created using [mHMMbayes::mHMM()], [mHMMbayes::mHMM_vary()], [mHMMbayes::obtain_gamma()].
+#' @param model Object of type `mHMMbayes::mHMM` or `mHMMbayes::mHMM_gamma`, created using [mHMMbayes::mHMM()] or [mHMMbayes::obtain_gamma()].
 #' @param level String specifying the level of transition distributions to plot. Options are "group" and "subject".
-#' @param ID Optional integer or integer vector specifying the subject(s) to plot.
+#' @param subject Optional integer or integer vector specifying the subject(s) to plot.
 #' @param digits Integer specifying the number of digits to round to.
 #' @param facet Logical specifying whether subjects should be faceted when plotting subject-specific transition probability matrices.
 #' @param ncol_facet Integer specifying the number of columns in the facet grid when plotting subject-specific transition probability matrices.
@@ -62,16 +62,16 @@
 #' }
 plot_gamma <- function(model = NULL,
                        level = "group",
-                       ID = NULL,
+                       subject = NULL,
                        digits = 2,
                        facet = TRUE,
                        ncol_facet = 2) {
   check_model(
     model,
-    classes = c("mHMM", "mHMM_vary", "mHMM_gamma"),
-    fns = c("mHMM", "mHMM_vary", "obtain_gamma")
+    classes = c("mHMM", "mHMM_gamma"),
+    fns = c("mHMM", "obtain_gamma")
   )
-  if (inherits(model, c("mHMM", "mHMM_vary"))) {
+  if (inherits(model, "mHMM")) {
     m <- model$input$m
     nsubj <- model$input$n_subj
     if (is.null(level) | !(level %in% c("group", "subject"))) {
@@ -82,11 +82,7 @@ plot_gamma <- function(model = NULL,
         )
       )
     }
-    if(inherits(model, "mHMM_vary")){
-      gamma_matrix <- obtain_gamma_new(object = model, level = level)
-    } else {
-      gamma_matrix <- mHMMbayes::obtain_gamma(object = model, level = level)
-    }
+    gamma_matrix <- mHMMbayes::obtain_gamma(object = model, level = level)
   } else {
     gamma_matrix <- model
     if (inherits(gamma_matrix, "list")) {
@@ -110,13 +106,13 @@ plot_gamma <- function(model = NULL,
   }
   state_labels <- paste("State", 1:m)
   if (level == "subject") {
-    if (is.null(ID)) {
-      ID <- 1:nsubj
+    if (is.null(subject)) {
+      subject <- 1:nsubj
     }
-    if (length(ID) == 1) {
-      gamma_matrix <- gamma_matrix[[ID]]
+    if (length(subject) == 1) {
+      gamma_matrix <- gamma_matrix[[subject]]
     } else {
-      gamma_matrix <- gamma_matrix[ID]
+      gamma_matrix <- gamma_matrix[subject]
       if (facet) {
         col_names <- paste("From", rep(state_labels, each = m), "to", state_labels)
         gamma_melt <- lapply(gamma_matrix, function(x){
@@ -134,7 +130,7 @@ plot_gamma <- function(model = NULL,
             )
         }) %>%
           dplyr::bind_rows(.id = "Subject") %>%
-          dplyr::mutate(Subject = factor(.data$Subject, levels = paste("Subject", ID)))
+          dplyr::mutate(Subject = factor(.data$Subject, levels = paste("Subject", subject)))
         gg <- ggplot2::ggplot(data = gamma_melt,
                               mapping = ggplot2::aes(x = .data$To_state, y = .data$From_state, fill = .data$prob)) +
           ggplot2::geom_tile(color = "white") +
@@ -169,7 +165,7 @@ plot_gamma <- function(model = NULL,
             names_to = "From_To",
             values_to = "prob"
           ) %>%
-          dplyr::mutate(Subject = factor(.data$Subject, levels = paste("Subject", ID)))
+          dplyr::mutate(Subject = factor(.data$Subject, levels = paste("Subject", subject)))
         gg <- gamma_matrix %>%
           ggplot2::ggplot(mapping = ggplot2::aes(
             x = .data$From_To,
@@ -215,7 +211,7 @@ plot_gamma <- function(model = NULL,
       From_state = factor(.data$From_state, labels = state_labels),
       To_state = factor(.data$To_state, labels = state_labels)
     )
-  if (level == "group" | !is.null(ID)) {
+  if (level == "group" | !is.null(subject)) {
     gg <- ggplot2::ggplot(data = gamma_melt,
                           mapping = ggplot2::aes(x = .data$To_state, y = .data$From_state, fill = .data$prob)) +
       ggplot2::geom_tile(color = "white") +
