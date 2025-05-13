@@ -7,6 +7,7 @@
 #' @param alpha Numeric value indicating transparency of subject-specific posterior densities.
 #' @param position Object created with ggplot2::position_jitter indicating the amount of jitter.
 #' @param line Logical indicating whether to plot lines when plotton individual-level distributions.
+#' @param n_plot Vector indicating the subjects to plot when `subject_effects = TRUE`. Default is `NULL`, which means all subjects are plotted.
 #'
 #' @return
 #' Object of type `ggplot2::gg` plotting emission distributions.
@@ -67,10 +68,14 @@ plot_emiss <- function(model,
                        cat_labels = NULL,
                        position = ggplot2::position_jitter(width = 0.2, height = 0),
                        alpha = 0.75,
-                       line = FALSE) {
+                       line = FALSE,
+                       n_plot = NULL) {
   check_model(model, classes = "mHMM")
   m <- model$input$m
   n_subj <- model$input$n_subj
+  if(is.null(n_plot)){
+    n_plot <- 1:n_subj
+  }
   state_labels <- paste("State", 1:m)
   distr <- model$input$data_distr
   n_dep <- model$input$n_dep
@@ -114,10 +119,10 @@ plot_emiss <- function(model,
     if (subject_effects) {
       emiss_subj <- mHMMbayes::obtain_emiss(object = model, level = "subject")
       gg_emiss_subject <- data.frame(
-        Subj = rep(rep(1:n_subj, each = m), n_dep),
-        State = factor(rep(1:m, n_subj * n_dep), labels = state_labels),
+        Subj = rep(rep(n_plot, each = m), n_dep),
+        State = factor(rep(1:m, length(n_plot) * n_dep), labels = state_labels),
         Dep = factor(c(rep(
-          vrb, each = m * n_subj
+          vrb, each = m * length(n_plot)
         )), levels = vrb)
       )
       if(distr == "continuous"){
