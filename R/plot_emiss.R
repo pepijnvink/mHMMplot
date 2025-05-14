@@ -6,7 +6,7 @@
 #' @param cat_labels Character vector of labels for the categorical variables.
 #' @param alpha Numeric value indicating transparency of subject-specific posterior densities.
 #' @param position Object created with ggplot2::position_jitter indicating the amount of jitter.
-#' @param line Logical indicating whether to plot lines when plotton individual-level distributions.
+#' @param line Logical indicating whether to plot lines when plotting individual-level distributions.
 #' @param subject Vector indicating the subjects to plot when `subject_effects = TRUE`. Default is `NULL`, which means all subjects are plotted.
 #'
 #' @return
