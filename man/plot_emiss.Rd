@@ -10,8 +10,9 @@ plot_emiss(
   subject_effects = TRUE,
   cat_labels = NULL,
   position = ggplot2::position_jitter(width = 0.2, height = 0),
-  alpha = 0.5,
-  line = FALSE
+  alpha = 0.75,
+  line = FALSE,
+  subject = NULL
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ plot_emiss(
 \item{alpha}{Numeric value indicating transparency of subject-specific posterior densities.}
 
 \item{line}{Logical indicating whether to plot lines when plotton individual-level distributions.}
+
+\item{subject}{Vector indicating the subjects to plot when `subject_effects = TRUE`. Default is `NULL`, which means all subjects are plotted.}
 }
 \value{
 Object of type `ggplot2::gg` plotting emission distributions.

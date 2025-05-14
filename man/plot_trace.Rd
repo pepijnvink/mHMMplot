@@ -10,7 +10,7 @@ plot_trace(
   param = NULL,
   level = "group",
   vrb = NULL,
-  prob = FALSE,
+  prob = TRUE,
   subject = NULL,
   state_labels = NULL,
   cat_labels = NULL,

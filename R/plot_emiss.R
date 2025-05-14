@@ -6,7 +6,8 @@
 #' @param cat_labels Character vector of labels for the categorical variables.
 #' @param alpha Numeric value indicating transparency of subject-specific posterior densities.
 #' @param position Object created with ggplot2::position_jitter indicating the amount of jitter.
-#' @param line Logical indicating whether to plot lines when plotton individual-level distributions.
+#' @param line Logical indicating whether to plot lines when plotting individual-level distributions.
+#' @param subject Vector indicating the subjects to plot when `subject_effects = TRUE`. Default is `NULL`, which means all subjects are plotted.
 #'
 #' @return
 #' Object of type `ggplot2::gg` plotting emission distributions.
@@ -66,11 +67,15 @@ plot_emiss <- function(model,
                        subject_effects = TRUE,
                        cat_labels = NULL,
                        position = ggplot2::position_jitter(width = 0.2, height = 0),
-                       alpha = 0.5,
-                       line = FALSE) {
+                       alpha = 0.75,
+                       line = FALSE,
+                       subject = NULL) {
   check_model(model, classes = "mHMM")
   m <- model$input$m
   n_subj <- model$input$n_subj
+  if(is.null(subject)){
+    subject <- 1:n_subj
+  }
   state_labels <- paste("State", 1:m)
   distr <- model$input$data_distr
   n_dep <- model$input$n_dep
@@ -88,7 +93,8 @@ plot_emiss <- function(model,
         tibble::rownames_to_column(var = "State")
     }) %>%
       dplyr::bind_rows(.id = "Dep") %>%
-      dplyr::mutate(State = factor(.data$State, labels = state_labels))
+      dplyr::mutate(State = factor(.data$State, labels = state_labels),
+                    Dep = factor(.data$Dep, labels = vrb, levels = vrb))
     } else {
       emiss_group <- emiss_group[[1]]
       rownames(emiss_group) <- paste0(1:m)
@@ -101,7 +107,8 @@ plot_emiss <- function(model,
       emiss_group_melt <- as.data.frame(emiss_group) %>%
         tibble::rownames_to_column(var = "State") %>%
         tidyr::pivot_longer(cols = -.data$State, names_to = "Dep", values_to = "Mean") %>%
-        dplyr::mutate(State = factor(.data$State, labels = state_labels))
+        dplyr::mutate(State = factor(.data$State, labels = state_labels),
+                      Dep = factor(.data$Dep, labels = vrb, levels = vrb))
     }
     if(distr == "categorical"){
       emiss_group_melt$Dep <- factor(emiss_group_melt$Dep, labels = vrb)
@@ -112,10 +119,10 @@ plot_emiss <- function(model,
     if (subject_effects) {
       emiss_subj <- mHMMbayes::obtain_emiss(object = model, level = "subject")
       gg_emiss_subject <- data.frame(
-        Subj = rep(rep(1:n_subj, each = m), n_dep),
-        State = factor(rep(1:m, n_subj * n_dep), labels = state_labels),
+        Subj = rep(rep(subject, each = m), n_dep),
+        State = factor(rep(1:m, length(subject) * n_dep), labels = state_labels),
         Dep = factor(c(rep(
-          vrb, each = m * n_subj
+          vrb, each = m * length(subject)
         )), levels = vrb)
       )
       if(distr == "continuous"){
@@ -150,7 +157,8 @@ plot_emiss <- function(model,
           ggplot2::geom_line(
             data = gg_emiss_subject,
             mapping = ggplot2::aes(x = .data$State, y = .data$Mean, group = .data$Subj),
-            alpha = alpha
+            alpha = alpha,
+            color = "grey"
           )
       }
 
