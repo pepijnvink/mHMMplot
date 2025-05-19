@@ -14,4 +14,4 @@ It can be installed from GitHub using the following code block:
 remotes::install_github("pepijnvink/ggmHMM")
 ```
 
-Please report any issues using the `issues` tab on GitHub.
+Please report any issues using the [issues](https://github.com/pepijnvink/ggmHMM/issues) tab on GitHub.
