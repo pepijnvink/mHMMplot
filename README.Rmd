@@ -1,24 +1,28 @@
+---
+output: github_document
+---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
 
 # ggmHMM
 
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of ggmHMM is to visualize the output of Multilevel Hidden
-Markov Models (MHMMs) using the
-[ggplot2](https://ggplot2.tidyverse.org/) package. It is meant to be
-used alongside the
-[mHMMbayes](https://github.com/emmekeaarts/mHMMbayes/) package. Note
-that the package is **a work in progress**. Please report any issues
-using the [issues](https://github.com/pepijnvink/ggmHMM/issues) tab on
-GitHub.
+The goal of ggmHMM is to visualize the output of Multilevel Hidden Markov Models (MHMMs) using the [ggplot2](https://ggplot2.tidyverse.org/) package. It is meant to be used alongside the [mHMMbayes](https://github.com/emmekeaarts/mHMMbayes/) package. Note that the package is **a work in progress**. Please report any issues using the [issues](https://github.com/pepijnvink/ggmHMM/issues) tab on GitHub.
 
 ## Installation
 
-You can install the development version of ggmHMM from
-[GitHub](https://github.com/) with:
+You can install the development version of ggmHMM from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("pak")
@@ -27,11 +31,9 @@ pak::pak("pepijnvink/ggmHMM")
 
 ## Example
 
-To show an example of how the package can work, we first load the ggmHMM
-package and the mHMMbayes package, and simulate some data, as well as
-run a model.
+To show an example of how the package can work, we first load the ggmHMM package and the mHMMbayes package, and simulate some data, as well as run a model.
 
-``` r
+```{r example-notrun, eval = FALSE}
 library(ggmHMM)
 library(mHMMbayes)
 library(ggplot2)
@@ -81,15 +83,16 @@ out_3st_cont <- mHMM(s_data = data_cont$obs,
                          mcmc = list(J = 100, burn_in = 5))
 ```
 
-We can now, for example, create a plot to visualize the emission means,
-using `plot_emiss()`, and include the subject-specific effects. We can
-then use functions from the [ggplot2](https://ggplot2.tidyverse.org/)
-package to further customize the plot, such as adding a title with
-`ggtitle()`.
+```{r example, include = FALSE}
+library(ggmHMM)
+library(mHMMbayes)
+library(ggplot2)
+mhmm_cont <- readRDS("tests/testthat/fixtures/mhmm_cont.rds")
+```
 
-``` r
+We can now, for example, create a plot to visualize the emission means, using `plot_emiss()`, and include the subject-specific effects. We can then use functions from the [ggplot2](https://ggplot2.tidyverse.org/) package to further customize the plot, such as adding a title with `ggtitle()`.
+
+```{r example-plot-emiss}
 plot_emiss(mhmm_cont, type = "bar", subject_effects = TRUE, line = TRUE) +
   ggtitle("Emission means with random effects")
 ```
-
-<img src="man/figures/README-example-plot-emiss-1.png" width="100%" />

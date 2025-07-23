@@ -148,10 +148,9 @@ plot_gamma <- function(model = NULL,
           ) +
           ggplot2::labs(x = "To mood state", y = "From mood state") +
           ggplot2::coord_fixed() +
-          ggplot2::facet_wrap(~Subject, ncol = ncol_facet) +
-          ggplot2::scale_x_discrete(labels = state_labels) +
-          ggplot2::scale_y_discrete(labels = state_labels, limits = rev) +
-          ggplot2::theme_classic()
+          ggplot2::facet_wrap(~Subject, ncol = ncol_facet, axes = "all") +
+          ggplot2::scale_y_discrete(limits = rev) +
+          ggplot2::theme_bw()
       } else {
         col_names <- paste("From", rep(state_labels, each = m), "to", state_labels)
         gamma_matrix <- sapply(gamma_matrix, function(x)
@@ -188,7 +187,7 @@ plot_gamma <- function(model = NULL,
           ggplot2::labs(x = ggplot2::element_blank(), y = "Subject") +
           ggplot2::scale_y_discrete(limits = rev) +
           ggplot2::coord_fixed() +
-          ggplot2::theme_classic() +
+          ggplot2::theme_bw() +
           ggplot2::theme(axis.text.x = ggplot2::element_text(
             angle = 45,
             vjust = 1,

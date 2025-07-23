@@ -28,7 +28,7 @@ plot_emiss(
 
 \item{alpha}{Numeric value indicating transparency of subject-specific posterior densities.}
 
-\item{line}{Logical indicating whether to plot lines when plotton individual-level distributions.}
+\item{line}{Logical indicating whether to plot lines when plotting individual-level distributions.}
 
 \item{subject}{Vector indicating the subjects to plot when `subject_effects = TRUE`. Default is `NULL`, which means all subjects are plotted.}
 }
