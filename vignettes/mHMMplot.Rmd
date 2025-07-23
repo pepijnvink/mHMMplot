@@ -62,46 +62,94 @@ q_emiss <- c(3, 2, 3, 2)
 # specifying starting values
 start_TM <- diag(.8, m)
 start_TM[lower.tri(start_TM) | upper.tri(start_TM)] <- .2
-start_EM <- list(matrix(c(0.05, 0.90, 0.05, 
-                          0.90, 0.05, 0.05), byrow = TRUE,
-                        nrow = m, ncol = q_emiss[1]), # vocalizing patient
-                 matrix(c(0.1, 0.9, 
-                          0.1, 0.9), byrow = TRUE, nrow = m,
-                        ncol = q_emiss[2]), # looking patient
-                 matrix(c(0.90, 0.05, 0.05, 
-                          0.05, 0.90, 0.05), byrow = TRUE,
-                        nrow = m, ncol = q_emiss[3]), # vocalizing therapist
-                 matrix(c(0.1, 0.9, 
-                          0.1, 0.9), byrow = TRUE, nrow = m,
-                        ncol = q_emiss[4])) # looking therapist
+start_EM <- list(
+  matrix(
+    c(
+      0.05, 0.90, 0.05,
+      0.90, 0.05, 0.05
+    ),
+    byrow = TRUE,
+    nrow = m, ncol = q_emiss[1]
+  ), # vocalizing patient
+  matrix(
+    c(
+      0.1, 0.9,
+      0.1, 0.9
+    ),
+    byrow = TRUE, nrow = m,
+    ncol = q_emiss[2]
+  ), # looking patient
+  matrix(
+    c(
+      0.90, 0.05, 0.05,
+      0.05, 0.90, 0.05
+    ),
+    byrow = TRUE,
+    nrow = m, ncol = q_emiss[3]
+  ), # vocalizing therapist
+  matrix(
+    c(
+      0.1, 0.9,
+      0.1, 0.9
+    ),
+    byrow = TRUE, nrow = m,
+    ncol = q_emiss[4]
+  )
+) # looking therapist
 # Run a model without covariate(s) and default priors:
 set.seed(42)
-nonverbal_out_2st <- mHMM(s_data = nonverbal, 
-                gen = list(m = m, n_dep = n_dep, q_emiss = q_emiss), 
-                start_val = c(list(start_TM), start_EM),
-                mcmc = list(J = 1000, burn_in = 200))
+nonverbal_out_2st <- mHMM(
+  s_data = nonverbal,
+  gen = list(m = m, n_dep = n_dep, q_emiss = q_emiss),
+  start_val = c(list(start_TM), start_EM),
+  mcmc = list(J = 1000, burn_in = 200)
+)
 
 # Run a second chain
 ## specifying starting values for seconf chain
 start_TM_2 <- diag(.7, m)
 start_TM_2[lower.tri(start_TM_2) | upper.tri(start_TM_2)] <- .3
-start_EM_2 <- list(matrix(c(0.1, 0.80, 0.1, 
-                            0.8, 0.1, 0.1), byrow = TRUE,
-                        nrow = m, ncol = q_emiss[1]), # vocalizing patient
-                 matrix(c(0.2, 0.8, 
-                          0.2, 0.8), byrow = TRUE, nrow = m,
-                        ncol = q_emiss[2]), # looking patient
-                 matrix(c(0.80, 0.1, 0.1, 
-                          0.1, 0.8, 0.1), byrow = TRUE,
-                        nrow = m, ncol = q_emiss[3]), # vocalizing therapist
-                 matrix(c(0.2, 0.8, 
-                          0.2, 0.8), byrow = TRUE, nrow = m,
-                        ncol = q_emiss[4])) # looking therapist
+start_EM_2 <- list(
+  matrix(
+    c(
+      0.1, 0.80, 0.1,
+      0.8, 0.1, 0.1
+    ),
+    byrow = TRUE,
+    nrow = m, ncol = q_emiss[1]
+  ), # vocalizing patient
+  matrix(
+    c(
+      0.2, 0.8,
+      0.2, 0.8
+    ),
+    byrow = TRUE, nrow = m,
+    ncol = q_emiss[2]
+  ), # looking patient
+  matrix(
+    c(
+      0.80, 0.1, 0.1,
+      0.1, 0.8, 0.1
+    ),
+    byrow = TRUE,
+    nrow = m, ncol = q_emiss[3]
+  ), # vocalizing therapist
+  matrix(
+    c(
+      0.2, 0.8,
+      0.2, 0.8
+    ),
+    byrow = TRUE, nrow = m,
+    ncol = q_emiss[4]
+  )
+) # looking therapist
 set.seed(123)
-nonverbal_out_2st_2 <- mHMM(s_data = nonverbal, 
-                gen = list(m = m, n_dep = n_dep, q_emiss = q_emiss), 
-                start_val = c(list(start_TM_2), start_EM_2),
-                mcmc = list(J = 1000, burn_in = 200))
+nonverbal_out_2st_2 <- mHMM(
+  s_data = nonverbal,
+  gen = list(m = m, n_dep = n_dep, q_emiss = q_emiss),
+  start_val = c(list(start_TM_2), start_EM_2),
+  mcmc = list(J = 1000, burn_in = 200)
+)
 ```
 
 
@@ -110,48 +158,63 @@ We will also simulate continuous data and fit a mHMM on it
 ```{r show specifying continuous model, eval = FALSE}
 # Continuous Dependent Variables
 # simulating multivariate continuous data
-n_t     <- 100
-n       <- 10
-m       <- 3
-n_dep   <- 2
+n_t <- 100
+n <- 10
+m <- 3
+n_dep <- 2
 
-gamma   <- matrix(c(0.8, 0.1, 0.1,
-                    0.2, 0.7, 0.1,
-                    0.2, 0.2, 0.6), ncol = m, byrow = TRUE)
+gamma <- matrix(c(
+  0.8, 0.1, 0.1,
+  0.2, 0.7, 0.1,
+  0.2, 0.2, 0.6
+), ncol = m, byrow = TRUE)
 
-emiss_distr <- list(matrix(c( 50, 10,
-                              100, 10,
-                              150, 10), nrow = m, byrow = TRUE),
-                    matrix(c(5, 2,
-                             10, 5,
-                             20, 3), nrow = m, byrow = TRUE))
+emiss_distr <- list(
+  matrix(c(
+    50, 10,
+    100, 10,
+    150, 10
+  ), nrow = m, byrow = TRUE),
+  matrix(c(
+    5, 2,
+    10, 5,
+    20, 3
+  ), nrow = m, byrow = TRUE)
+)
 set.seed(42)
-data_cont <- sim_mHMM(n_t = n_t, n = n, data_distr = 'continuous',
-                      gen = list(m = m, n_dep = n_dep),
-                      gamma = gamma, emiss_distr = emiss_distr,
-                      var_gamma = .1, var_emiss = c(5^2, 0.2^2))
+data_cont <- sim_mHMM(
+  n_t = n_t, n = n, data_distr = "continuous",
+  gen = list(m = m, n_dep = n_dep),
+  gamma = gamma, emiss_distr = emiss_distr,
+  var_gamma = .1, var_emiss = c(5^2, 0.2^2)
+)
 
 # Specify hyper-prior for the continuous emission distribution
 manual_prior_emiss <- prior_emiss_cont(
   gen = list(m = m, n_dep = n_dep),
-  emiss_mu0 = list(matrix(c(30, 70, 170), nrow = 1),
-                   matrix(c(7, 8, 18), nrow = 1)),
+  emiss_mu0 = list(
+    matrix(c(30, 70, 170), nrow = 1),
+    matrix(c(7, 8, 18), nrow = 1)
+  ),
   emiss_K0 = list(1, 1),
-  emiss_V =  list(rep(5^2, m), rep(0.5^2, m)),
+  emiss_V = list(rep(5^2, m), rep(0.5^2, m)),
   emiss_nu = list(1, 1),
   emiss_a0 = list(rep(1.5, m), rep(1, m)),
-  emiss_b0 = list(rep(20, m), rep(4, m)))
+  emiss_b0 = list(rep(20, m), rep(4, m))
+)
 
 # Run the model on the simulated data:
 # Note that for reasons of running time, J is set at a ridiculous low value.
 # One would typically use a number of iterations J of at least 1000,
 # and a burn_in of 200.
-out_3st_cont <- mHMM(s_data = data_cont$obs,
-                     data_distr = 'continuous',
-                     gen = list(m = m, n_dep = n_dep),
-                     start_val = c(list(gamma), emiss_distr),
-                     emiss_hyp_prior = manual_prior_emiss,
-                     mcmc = list(J = 1000, burn_in = 200))
+out_3st_cont <- mHMM(
+  s_data = data_cont$obs,
+  data_distr = "continuous",
+  gen = list(m = m, n_dep = n_dep),
+  start_val = c(list(gamma), emiss_distr),
+  emiss_hyp_prior = manual_prior_emiss,
+  mcmc = list(J = 1000, burn_in = 200)
+)
 ```
 
 
@@ -230,8 +293,10 @@ plot_trace(
 It is also possible to plot multiple chains simultaneously. This can be done by probiding a list of `mHMMbayes::mmHMM` objects:
 ```{r plot emiss-subj labeled twochains}
 plot_trace(
-  model = list(nonverbal_out_2st,
-               nonverbal_out_2st_2), # list of models to plot
+  model = list(
+    nonverbal_out_2st,
+    nonverbal_out_2st_2
+  ), # list of models to plot
   component = "emiss", # plot transition probabilities
   vrb = "p_looking", # variable to plot
   level = "subject", # subject-level parameters
@@ -284,7 +349,7 @@ To instead plot subject-level transition probabilities, specify the following:
 ```{r}
 plot_gamma(
   model = nonverbal_out_2st, # mHMM model
-  level = "subject", #plot subject level
+  level = "subject", # plot subject level
   facet = TRUE
 )
 ```
@@ -293,7 +358,7 @@ To only plot transition probabilities for a subset of individuals, you can provi
 ```{r}
 plot_gamma(
   model = nonverbal_out_2st, # mHMM model
-  level = "subject", #plot subject level
+  level = "subject", # plot subject level
   subject = 1:5, # only plot for subjects 1 to 5
   facet = TRUE
 )
@@ -303,7 +368,7 @@ The default for subject level heat plots is to show separate plots for each subj
 ```{r}
 plot_gamma(
   model = nonverbal_out_2st, # mHMM model
-  level = "subject", #plot subject level
+  level = "subject", # plot subject level
   subject = 1:5, # only plot for subjects 1 to 5
   facet = FALSE # do not facet
 )
@@ -318,7 +383,7 @@ gamma_group <- obtain_gamma(
 )
 ## Plot group-level transition probabilities
 plot_gamma(
-  model = gamma_group, # transition probabilities. 'level' argument is now redundant
+  model = gamma_group, # transition probabilities. 'level' argument is redundant
 )
 ```
 
@@ -332,7 +397,7 @@ gamma_subj <- obtain_gamma(
 )
 ## Plot group-level transition probabilities
 plot_gamma(
-  model = gamma_subj, # transition probabilities. 'level' argument is now redundant
+  model = gamma_subj, # transition probabilities. 'level' argument is redundant
 )
 ```
 
@@ -343,7 +408,10 @@ In addition to plotting the posterior estimates and trace plots for the posterio
 plot_posterior(
   model = nonverbal_out_2st, # model to plot
   component = "gamma", # plot transition distributions
-  state_labels = c("Patient Speaking State", "Patient Listening State") # again, optional
+  state_labels = c(
+    "Patient Speaking State", # again, optional
+    "Patient Listening State"
+  )
 )
 ```
 
@@ -377,14 +445,16 @@ plot_viterbi(
 )
 ```
 
-As shown above, the default is to plot infered states for all individuals. In the plot below, the states for only a subset of individuals is plotted. We also use the function `scale_fill_manual()` from the `ggplot2` package to give new colors to the states as well as providing custom state labels.
+As shown above, the default is to plot inferred states for all individuals. In the plot below, the states for only a subset of individuals is plotted. We also use the function `scale_fill_manual()` from the `ggplot2` package to give new colors to the states as well as providing custom state labels.
 ```{r}
 plot_viterbi(
   states = states, # dataframe with states
-  subject = 1:5 # vector specifying subjects to plot. integer for a single subject is also possible
+  subject = 1:5 # vector (or integer) specifying subjects to plot.
 ) +
-  scale_fill_manual(values = c("red", "green"), # choose new 
-                    labels = c("State One", "State Two"))
+  scale_fill_manual(
+    values = c("red", "green"), # choose new
+    labels = c("State One", "State Two")
+  )
 ```
 
 # Editing plot
@@ -410,11 +480,15 @@ Similarly is also possible to add a title and/or customize the axis labels, edit
 ```{r}
 posterior +
   theme_dark() + # set new theme
-  labs(title = "Trace Plot for Group-Level Transition Probabilities", # add title
-       x = "Iteration", # change x axis title
-       y = "Transition Probability") +# change y axis title
-  scale_color_manual(values=c("green", "orange"), # change colors for each chain
-                     labels = c("First Chain", "Second Chain") # customize labels for each chain
+  labs(
+    title = "Trace Plot for Group-Level Transition Probabilities", # add title
+    x = "Iteration", # change x axis title
+    y = "Transition Probability" # change y axis title
+  ) +
+  scale_color_manual(
+    values = c("green", "orange"),
+    # change colors for each chain
+    labels = c("First Chain", "Second Chain") # customize labels for each chain
   )
 ```
 
