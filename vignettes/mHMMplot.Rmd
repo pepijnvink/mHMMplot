@@ -1,11 +1,11 @@
 ---
-title: "ggmHMM"
+title: "mHMMplot"
 output:
   rmarkdown::html_vignette:
     fig_width: 6
     fig_height: 6
 vignette: >
-  %\VignetteIndexEntry{ggmHMM}
+  %\VignetteIndexEntry{mHMMplot}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -16,12 +16,12 @@ knitr::opts_chunk$set(
 )
 ```
 
-The `ggmHMM` package provides wrapper functions used to visualize Bayesian Multilevel Hidden Markov Models, using the `ggplot2` package. Most functions take an object that is built using the `mHMMbayes` package. They output a 'ggplot' object, which can be edited by a user using functions from the `ggplot2` package. This vignette will not go into details of the Bayesian Multilevel Hidden Markov Model, neither into fitten a model; for that, see the documentation of the `mHMMbayes` package.
+The `mHMMplot` package provides wrapper functions used to visualize Bayesian Multilevel Hidden Markov Models, using the `ggplot2` package. Most functions take an object that is built using the `mHMMbayes` package. They output a 'ggplot' object, which can be edited by a user using functions from the `ggplot2` package. This vignette will not go into details of the Bayesian Multilevel Hidden Markov Model, neither into fitten a model; for that, see the documentation of the `mHMMbayes` package.
 
 # Set-up
 First, we load the required packages:
 ```{r}
-library(ggmHMM)
+library(mHMMplot)
 library(ggplot2)
 library(mHMMbayes)
 ```
@@ -388,7 +388,7 @@ plot_viterbi(
 ```
 
 # Editing plot
-The examples above already teased that plots returned by functions from the package can be easily customized. Each plotting function from `ggmHMM` returns an object of type `ggplot`. This means that functions from the `ggplot2` package can be used to customize plots, such as customizing themes.
+The examples above already teased that plots returned by functions from the package can be easily customized. Each plotting function from `mHMMplot` returns an object of type `ggplot`. This means that functions from the `ggplot2` package can be used to customize plots, such as customizing themes.
 The default theme for plots returned by functions in the package is the `bw` theme, for example:
 ```{r}
 # Plot transition probabilities

@@ -1,4 +1,4 @@
-Package: ggmHMM
+Package: mHMMplot
 Type: Package
 Title: Plotting Bayesian Multilevel Hidden Markov Models from the mHMMbayes Package Using ggplot2
 Version: 0.1.0

@@ -1,38 +1,38 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# ggmHMM
+# mHMMplot
 
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of ggmHMM is to visualize the output of Multilevel Hidden
+The goal of mHMMplot is to visualize the output of Multilevel Hidden
 Markov Models (MHMMs) using the
 [ggplot2](https://ggplot2.tidyverse.org/) package. It is meant to be
 used alongside the
 [mHMMbayes](https://github.com/emmekeaarts/mHMMbayes/) package. Note
 that the package is **a work in progress**. Please report any issues
-using the [issues](https://github.com/pepijnvink/ggmHMM/issues) tab on
+using the [issues](https://github.com/pepijnvink/mHMMplot/issues) tab on
 GitHub.
 
 ## Installation
 
-You can install the development version of ggmHMM from
+You can install the development version of mHMMplot from
 [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("pak")
-pak::pak("pepijnvink/ggmHMM")
+pak::pak("pepijnvink/mHMMplot")
 ```
 
 ## Example
 
-To show an example of how the package can work, we first load the ggmHMM
-package and the mHMMbayes package, and simulate some data, as well as
-run a model.
+To show an example of how the package can work, we first load the
+mHMMplot package and the mHMMbayes package, and simulate some data, as
+well as run a model.
 
 ``` r
-library(ggmHMM)
+library(mHMMplot)
 library(mHMMbayes)
 library(ggplot2)
 ## basic example code
