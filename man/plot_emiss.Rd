@@ -9,7 +9,7 @@ plot_emiss(
   type = "bar",
   subject_effects = TRUE,
   cat_labels = NULL,
-  position = ggplot2::position_jitter(width = 0.2, height = 0),
+  jitter = ggplot2::position_jitter(width = 0.2, height = 0),
   alpha = 0.75,
   line = FALSE,
   subject = NULL,
@@ -30,7 +30,7 @@ estimates should be plotted.}
 
 \item{cat_labels}{Character vector of labels for the categorical variables.}
 
-\item{position}{Object created with ggplot2::position_jitter indicating
+\item{jitter}{Object created with ggplot2::position_jitter indicating
 the amount of jitter.}
 
 \item{alpha}{Numeric value indicating transparency of subject-specific
