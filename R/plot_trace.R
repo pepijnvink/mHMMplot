@@ -534,6 +534,7 @@ plot_trace <- function(model,
       ))
   }
   gg <- gg +
-    ggplot2::theme_bw()
+    theme_mhmm() +
+    scale_color_mhmm(which = "color")
   return(gg)
 }

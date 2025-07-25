@@ -1,21 +1,33 @@
 # Functions for Internal Use
+
+# Shorthand for 'not in'
 `%nin%` <- Negate(`%in%`)
 
+#' Verify data type for input and return error if not matching.
+#'
+#' @param model Object to check class for
+#' @param classes string or character vector of allowed classes
+#' @param fns functions to suggest when returning error
+#'
+#' @return Either nothing, a warning message, or an error.
+#'
+#' @keywords internal
+#' @noRd
 check_model <- function(model,
                         classes = "mHMM",
                         fns = classes) {
   if (is.null(model)) {
     cls_names <- cli::cli_vec(paste0("mHMMbayes::", classes),
-      style = list(
-        "vec-last" = ", or ",
-        "vec-sep2" = " or "
-      )
+                              style = list(
+                                "vec-last" = ", or ",
+                                "vec-sep2" = " or "
+                              )
     )
     fns_names <- cli::cli_vec(paste0("mHMMbayes::", fns),
-      style = list(
-        "vec-last" = ", or ",
-        "vec-sep2" = " or "
-      )
+                              style = list(
+                                "vec-last" = ", or ",
+                                "vec-sep2" = " or "
+                              )
     )
     cli::cli_abort(
       c(
@@ -27,16 +39,16 @@ check_model <- function(model,
   }
   if (!inherits(model, classes)) {
     cls_names <- cli::cli_vec(paste0("mHMMbayes::", classes),
-      style = list(
-        "vec-last" = ", or ",
-        "vec-sep2" = " or "
-      )
+                              style = list(
+                                "vec-last" = ", or ",
+                                "vec-sep2" = " or "
+                              )
     )
     fns_names <- cli::cli_vec(paste0("mHMMbayes::", fns),
-      style = list(
-        "vec-last" = ", or ",
-        "vec-sep2" = " or "
-      )
+                              style = list(
+                                "vec-last" = ", or ",
+                                "vec-sep2" = " or "
+                              )
     )
     cli::cli_abort(
       c(
@@ -50,6 +62,16 @@ check_model <- function(model,
   }
 }
 
+#' Function to check whether specified variable is valid
+#'
+#' @param model object to check
+#' @param vrb specified variable
+#' @param vctr logical indicating whether a vector of variable names is allowed
+#'
+#' @return Nothing, a warning message, or an error.
+#'
+#' @keywords internal
+#' @noRd
 check_vrb <- function(model, vrb, vctr = TRUE) {
   if (is.null(vrb)) {
     vrb <- model$input$dep_labels[1]
@@ -83,10 +105,10 @@ check_vrb <- function(model, vrb, vctr = TRUE) {
   }
   if (vrb %nin% model$input$dep_labels) {
     dep_labs <- cli::cli_vec(model$input$dep_labels,
-      style = list(
-        "vec-last" = ", or ",
-        "vec-sep2" = " or "
-      )
+                             style = list(
+                               "vec-last" = ", or ",
+                               "vec-sep2" = " or "
+                             )
     )
     cli::cli_abort(
       c(
@@ -100,6 +122,55 @@ check_vrb <- function(model, vrb, vctr = TRUE) {
     )
   }
   return(vrb)
+}
+
+#' Default theme for plots
+#'
+#' @return a ggplot2 theme
+#'
+#' @keywords internal
+#' @noRd
+theme_mhmm <- function() {
+  ggplot2::theme_bw() +
+    ggplot2::theme(
+      panel.grid.major = ggplot2::element_blank(),
+      panel.grid.minor = ggplot2::element_blank(),
+      axis.text = ggplot2::element_text(size = 12, vjust = .5, hjust = 1),
+      axis.text.x = ggplot2::element_text(angle = 45),
+      axis.title = ggplot2::element_text(size = 14),
+      plot.title = ggplot2::element_text(size = 16, face = "bold"),
+      legend.text = ggplot2::element_text(size = 12),
+      legend.title = ggplot2::element_text(size = 14),
+      strip.text = ggplot2::element_text(size = 12),
+      plot.caption = ggplot2::element_text(size = 10)
+    )
+}
+
+
+#' Default color scheme, based on Tableau color schemes
+#'
+#' @param which Either "color" or "fill", specidying which `scale_*_manual()` to use
+#'
+#' @return Color scheme
+#'
+#' @keywords internal
+#' @noRd
+scale_color_mhmm <- function(which = "color") {
+  clrs <- c("#4E79A7",
+            "#F28E2B",
+            "#E15759",
+            "#499894",
+            "#59A14F",
+            "#EDC948",
+            "#B07AA1",
+            "#d37295",
+            "#9C755F",
+            "#BAB0AC")
+  if(which == "color") {
+    ggplot2::scale_color_manual(values = clrs)
+  } else if (which == "fill") {
+    ggplot2::scale_fill_manual(values = clrs)
+  }
 }
 
 #' Pipe operator

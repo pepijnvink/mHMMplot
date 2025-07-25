@@ -10,7 +10,7 @@ plot_viterbi(states, s_data, subject = NULL)
 \item{states}{Data Frame with inferred states
 obtained using [mHMMbayes::vit_HMM()] or object of class `mHMMbayes:mHMM`.}
 
-\item{s_data}{Data Frame with data used to infer states usingthe viterbi
+\item{s_data}{Data Frame with data used to infer states using the Viterbi
 algorithm. Only required when the object given to `states`
 is of class `mHMMbayes::mHMM`.}
 

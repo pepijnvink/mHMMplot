@@ -89,7 +89,7 @@ plot_posterior <- function(model,
                            state_labels = NULL,
                            cat_labels = NULL,
                            burnin = NULL,
-                           alpha = 0.1) {
+                           alpha = 0.2) {
   check_model(model, classes = c("mHMM", "mHMM_vary"))
   if (component %nin% c("gamma", "emiss")) {
     comp <- cli::cli_vec(c("gamma", "emiss"), style = list("vec-sep2" = " or "))
@@ -156,6 +156,10 @@ plot_posterior <- function(model,
           values_to = "Transition Probability",
           names_to = c("From", "To"),
           names_pattern = "S(\\d+)toS(\\d+)"
+        ) %>%
+        dplyr::mutate(
+          From = factor(.data$From, labels = facet_labels),
+          To = factor(.data$To, labels = state_labels)
         )
     })
     data_group_long <- data_group %>%
@@ -164,6 +168,10 @@ plot_posterior <- function(model,
         values_to = "Transition Probability",
         names_to = c("From", "To"),
         names_pattern = "S(\\d+)toS(\\d+)"
+      ) %>%
+      dplyr::mutate(
+        From = factor(.data$From, labels = facet_labels),
+        To = factor(.data$To, labels = state_labels)
       )
     gg <- ggplot2::ggplot(data = data_group_long)
     for (i in 1:n_subj) {
@@ -190,10 +198,7 @@ plot_posterior <- function(model,
         position = "identity"
       ) +
       ggplot2::coord_cartesian(ylim = c(0, maxy)) +
-      ggplot2::facet_wrap(~ .data$From,
-        labeller = ggplot2::labeller(From = facet_labels)
-      ) +
-      ggplot2::scale_color_discrete(labels = state_labels)
+      ggplot2::facet_wrap(~ .data$From)
   } else {
     vrb <- check_vrb(model, vrb)
     if (inherits(model, "mHMM_vary")) {
@@ -245,7 +250,10 @@ plot_posterior <- function(model,
             values_to = "Conditional Probability",
             names_to = c("State", "Category"),
             names_pattern = names_pattern
-          )
+          ) %>%
+          dplyr::mutate(State = factor(.data$State, labels = state_labels),
+                        Category = factor(.data$Category,
+                          labels = cat_labels))
       })
       data_group_long <- data_group %>%
         tidyr::pivot_longer(
@@ -253,7 +261,10 @@ plot_posterior <- function(model,
           values_to = "Conditional Probability",
           names_to = c("Category", "State"),
           names_pattern = "Emiss(\\d+)_S(\\d+)"
-        )
+        ) %>%
+        dplyr::mutate(State = factor(.data$State, labels = state_labels),
+                      Category = factor(.data$Category,
+                        labels = cat_labels))
       gg <- ggplot2::ggplot(data = data_group_long)
       for (i in 1:n_subj) {
         gg <- gg +
@@ -261,7 +272,7 @@ plot_posterior <- function(model,
             data = data_subj[[i]],
             mapping = ggplot2::aes(
               x = .data$`Conditional Probability`,
-              color = .data$Category
+              color = .data$State
             ),
             alpha = alpha,
             geom = "line",
@@ -272,17 +283,14 @@ plot_posterior <- function(model,
         ggplot2::stat_density(
           mapping = ggplot2::aes(
             x = .data$`Conditional Probability`,
-            color = .data$Category
+            color = .data$State
           ),
           linewidth = 1,
           geom = "line",
           position = "identity"
         ) +
         ggplot2::coord_cartesian(ylim = c(0, maxy)) +
-        ggplot2::facet_wrap(~ .data$State,
-          labeller = ggplot2::labeller(State = state_labels)
-        ) +
-        ggplot2::scale_color_discrete(labels = cat_labels)
+        ggplot2::facet_wrap(~ .data$Category)
     } else if (data_distr == "continuous") {
       names_pattern <- paste0("dep", vrb_ind, "_S(\\d+)_([A-Za-z]+)")
       data_group_mu <- tibble::as_tibble(model$emiss_mu_bar[[vrb]][burnin:J, ],
@@ -298,7 +306,10 @@ plot_posterior <- function(model,
           values_to = "Value",
           names_to = c("Parameter", "State"),
           names_pattern = c("([A-Za-z]+)_(\\d+)")
-        )
+        ) %>%
+        dplyr::mutate(
+          State = factor(.data$State, labels = state_labels)
+          )
       data_subj <- lapply(model[["PD_subj"]], function(x) {
         x$cont_emiss[burnin:J, ] %>%
           tibble::as_tibble(.name_repair = "minimal") %>%
@@ -310,7 +321,8 @@ plot_posterior <- function(model,
             values_to = "Value",
             names_to = c("State", "Parameter"),
             names_pattern = names_pattern
-          )
+          ) %>%
+          dplyr::mutate(State = factor(.data$State, labels = state_labels))
       })
       gg <- ggplot2::ggplot(data = data_group_long)
       for (i in 1:n_subj) {
@@ -329,11 +341,11 @@ plot_posterior <- function(model,
           geom = "line",
           position = "identity"
         ) +
-        ggplot2::facet_wrap(~ .data$Parameter, scales = "free") +
-        ggplot2::scale_color_discrete(labels = state_labels)
+        ggplot2::facet_wrap(~ .data$Parameter, scales = "free")
     }
   }
   gg <- gg +
-    ggplot2::theme_bw()
+    theme_mhmm() +
+    scale_color_mhmm(which = "color")
   return(gg)
 }
