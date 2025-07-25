@@ -11,7 +11,7 @@ plot_posterior(
   state_labels = NULL,
   cat_labels = NULL,
   burnin = NULL,
-  alpha = 0.1
+  alpha = 0.2
 )
 }
 \arguments{
