@@ -6,16 +6,16 @@ check_model <- function(model,
                         fns = classes) {
   if (is.null(model)) {
     cls_names <- cli::cli_vec(paste0("mHMMbayes::", classes),
-      style = list(
-        "vec-last" = ", or ",
-        "vec-sep2" = " or "
-      )
+                              style = list(
+                                "vec-last" = ", or ",
+                                "vec-sep2" = " or "
+                              )
     )
     fns_names <- cli::cli_vec(paste0("mHMMbayes::", fns),
-      style = list(
-        "vec-last" = ", or ",
-        "vec-sep2" = " or "
-      )
+                              style = list(
+                                "vec-last" = ", or ",
+                                "vec-sep2" = " or "
+                              )
     )
     cli::cli_abort(
       c(
@@ -27,16 +27,16 @@ check_model <- function(model,
   }
   if (!inherits(model, classes)) {
     cls_names <- cli::cli_vec(paste0("mHMMbayes::", classes),
-      style = list(
-        "vec-last" = ", or ",
-        "vec-sep2" = " or "
-      )
+                              style = list(
+                                "vec-last" = ", or ",
+                                "vec-sep2" = " or "
+                              )
     )
     fns_names <- cli::cli_vec(paste0("mHMMbayes::", fns),
-      style = list(
-        "vec-last" = ", or ",
-        "vec-sep2" = " or "
-      )
+                              style = list(
+                                "vec-last" = ", or ",
+                                "vec-sep2" = " or "
+                              )
     )
     cli::cli_abort(
       c(
@@ -83,10 +83,10 @@ check_vrb <- function(model, vrb, vctr = TRUE) {
   }
   if (vrb %nin% model$input$dep_labels) {
     dep_labs <- cli::cli_vec(model$input$dep_labels,
-      style = list(
-        "vec-last" = ", or ",
-        "vec-sep2" = " or "
-      )
+                             style = list(
+                               "vec-last" = ", or ",
+                               "vec-sep2" = " or "
+                             )
     )
     cli::cli_abort(
       c(
@@ -116,6 +116,24 @@ theme_mhmm <- function() {
       strip.text = ggplot2::element_text(size = 12),
       plot.caption = ggplot::element_text(size = 10)
     )
+}
+
+scale_color_mhmm <- function(which = "color") {
+  clrs <- c("#4E79A7",
+            "#F28E2B",
+            "#E15759",
+            "#499894",
+            "#59A14F",
+            "#EDC948",
+            "#B07AA1",
+            "#d37295",
+            "#9C755F",
+            "#BAB0AC")
+  if(which == "color") {
+    ggplot2::scale_color_manual(clrs)
+  } else if (which == "fill") {
+    ggplot2::scale_fill_manual(clrs)
+  }
 }
 
 #' Pipe operator
