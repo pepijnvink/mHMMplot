@@ -192,7 +192,7 @@ plot_emiss <- function(model,
       emiss_group_melt <- as.data.frame(emiss_group) %>%
         tibble::rownames_to_column(var = "State") %>%
         tidyr::pivot_longer(
-          cols = -.data$State,
+          cols = -State,
           names_to = "Dep",
           values_to = "Mean"
         ) %>%
@@ -202,7 +202,7 @@ plot_emiss <- function(model,
         )
       if (!is.null(errorbar)) {
         if (errorbar == "sd") {
-          cli::cli_alert(c("x" = "Errorbars for between-person standard deviation cannot be computed for categorical data.",
+          cli::cli_warn(c("x" = "Errorbars for between-person standard deviation cannot be computed for categorical data.",
                            "i" = "No error bar will be shown."))
           errorbar <- NULL
         } else if (errorbar == "hpd") {

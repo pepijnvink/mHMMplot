@@ -1,4 +1,5 @@
 out_3st_cont <- readRDS(test_path("fixtures", "mhmm_cont.rds"))
+out_3st_cat <- readRDS(test_path("fixtures", "mhmm_cat.rds"))
 test_that("Obtain plots (continuous)", {
   expect_s3_class(plot_emiss(
     out_3st_cont,
@@ -37,27 +38,27 @@ test_that("Obtain plots (categorical)", {
     out_3st_cat,
     type = "bar",
     errorbar = "hpd"
-  ))
+  ), "ggplot")
   expect_s3_class(plot_emiss(
     out_3st_cat,
     type = "bar",
     subject_effects = TRUE,
     errorbar = "eti",
-    vrb = "observation 1"
+    vrb = "p_looking"
   ), "ggplot")
   expect_s3_class(plot_emiss(
     out_3st_cat,
     type = "point",
     subject_effects = TRUE,
     errorbar = "eti",
-    vrb = "observation 1"
+    vrb = "p_looking"
   ), "ggplot")
   expect_s3_class(plot_emiss(
     out_3st_cat,
     type = "bar",
     subject_effects = TRUE,
     errorbar = "hpd",
-    vrb = "observation 1"
+    vrb = "t_looking"
   ), "ggplot")
 
 })
@@ -68,6 +69,6 @@ test_that("Other Error and warning messages", {
     out_3st_cat,
     type = "bar",
     errorbar = "sd",
-    vrb = "observation 1"
+    vrb = "p_vocalizing"
   ))
 })

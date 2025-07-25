@@ -90,7 +90,7 @@ plot_viterbi <- function(states, s_data, subject = NULL) {
                      to provide a data frame of inferred states."
       )
     } else {
-      states <- mHMMbayes::vit_mHMM(states, s_data = s_data)
+      suppressMessages({states <- mHMMbayes::vit_mHMM(states, s_data = s_data)})
     }
   }
   if (!inherits(states, "data.frame")) {
