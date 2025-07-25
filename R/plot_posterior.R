@@ -89,7 +89,7 @@ plot_posterior <- function(model,
                            state_labels = NULL,
                            cat_labels = NULL,
                            burnin = NULL,
-                           alpha = 0.1) {
+                           alpha = 0.2) {
   check_model(model, classes = c("mHMM", "mHMM_vary"))
   if (component %nin% c("gamma", "emiss")) {
     comp <- cli::cli_vec(c("gamma", "emiss"), style = list("vec-sep2" = " or "))

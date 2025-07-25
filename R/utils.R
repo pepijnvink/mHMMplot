@@ -102,6 +102,22 @@ check_vrb <- function(model, vrb, vctr = TRUE) {
   return(vrb)
 }
 
+theme_mhmm <- function() {
+  ggplot2::theme_bw() +
+    ggplot2::theme(
+      panel.grid.major = ggplot2::element_blank(),
+      panel.grid.minor = ggplot2::element_blank(),
+      axis.text = ggplot2::element_text(size = 12, vjust = .5, hjust = 1),
+      axis.text.x = ggplot2::element_text(angle = 45),
+      axis.title = ggplot2::element_text(size = 14),
+      plot.title = ggplot2::element_text(size = 16, face = "bold"),
+      legend.text = ggplot2::element_text(size = 12),
+      legend.title = ggplot2::element_text(size = 14),
+      strip.text = ggplot2::element_text(size = 12),
+      plot.caption = ggplot::element_text(size = 10)
+    )
+}
+
 #' Pipe operator
 #'
 #' See \code{magrittr::\link[magrittr:pipe]{\%>\%}} for details.
