@@ -141,7 +141,7 @@ plot_emiss <- function(model,
           emiss_group_melt$sdmu <- lapply(model$emiss_varmu_bar,
                                           function(x) {
                                             x[-(1:burn_in),] %>%
-                                              apply(2, median)
+                                              apply(2, stats::median)
                                           }) %>%
             unlist() %>%
             sqrt()
@@ -165,7 +165,7 @@ plot_emiss <- function(model,
         } else {
           eti <- lapply(model$emiss_mu_bar,
                         function(x) {
-                          apply(x[-(1:burn_in), ], 2, quantile,
+                          apply(x[-(1:burn_in), ], 2, stats::quantile,
                                 probs = c(0.025, 0.975)
                           ) %>%
                             t() %>%
@@ -213,7 +213,7 @@ plot_emiss <- function(model,
           emiss_group_melt <- cbind(emiss_group_melt, hpd)
           note_errorbar <- "Errorbars represent the 95% highest posterior density interval"
         } else {
-          eti <- apply(model[["emiss_prob_bar"]][[vrb]], 2, quantile, probs = c(0.025, 0.975)) %>%
+          eti <- apply(model[["emiss_prob_bar"]][[vrb]], 2, stats::quantile, probs = c(0.025, 0.975)) %>%
             t() %>%
             as.data.frame() %>%
             dplyr::rename_with(~c("lower", "upper"))

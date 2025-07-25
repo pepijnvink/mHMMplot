@@ -1,6 +1,18 @@
 # Functions for Internal Use
+
+# Shorthand for 'not in'
 `%nin%` <- Negate(`%in%`)
 
+#' Verify data type for input and return error if not matching.
+#'
+#' @param model Object to check class for
+#' @param classes string or character vector of allowed classes
+#' @param fns functions to suggest when returning error
+#'
+#' @return Either nothing, a warning message, or an error.
+#'
+#' @keywords internal
+#' @noRd
 check_model <- function(model,
                         classes = "mHMM",
                         fns = classes) {
@@ -50,6 +62,16 @@ check_model <- function(model,
   }
 }
 
+#' Function to check whether specified variable is valid
+#'
+#' @param model object to check
+#' @param vrb specified variable
+#' @param vctr logical indicating whether a vector of variable names is allowed
+#'
+#' @return Nothing, a warning message, or an error.
+#'
+#' @keywords internal
+#' @noRd
 check_vrb <- function(model, vrb, vctr = TRUE) {
   if (is.null(vrb)) {
     vrb <- model$input$dep_labels[1]
@@ -102,6 +124,12 @@ check_vrb <- function(model, vrb, vctr = TRUE) {
   return(vrb)
 }
 
+#' Default theme for plots
+#'
+#' @return a ggplot2 theme
+#'
+#' @keywords internal
+#' @noRd
 theme_mhmm <- function() {
   ggplot2::theme_bw() +
     ggplot2::theme(
@@ -114,10 +142,19 @@ theme_mhmm <- function() {
       legend.text = ggplot2::element_text(size = 12),
       legend.title = ggplot2::element_text(size = 14),
       strip.text = ggplot2::element_text(size = 12),
-      plot.caption = ggplot::element_text(size = 10)
+      plot.caption = ggplot2::element_text(size = 10)
     )
 }
 
+
+#' Default color scheme, based on Tableau color schemes
+#'
+#' @param which Either "color" or "fill", specidying which `scale_*_manual()` to use
+#'
+#' @return Color scheme
+#'
+#' @keywords internal
+#' @noRd
 scale_color_mhmm <- function(which = "color") {
   clrs <- c("#4E79A7",
             "#F28E2B",
