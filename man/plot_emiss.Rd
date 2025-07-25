@@ -12,7 +12,10 @@ plot_emiss(
   position = ggplot2::position_jitter(width = 0.2, height = 0),
   alpha = 0.75,
   line = FALSE,
-  subject = NULL
+  subject = NULL,
+  vrb = NULL,
+  burn_in = NULL,
+  errorbar = NULL
 )
 }
 \arguments{
@@ -20,7 +23,7 @@ plot_emiss(
 created using [mHMMbayes::mHMM()].}
 
 \item{type}{String specifying the type of plot to return.
-Takes "bar" and "boxplot".}
+Takes "bar", "point", and "boxplot".}
 
 \item{subject_effects}{Logical specifying whether a layer of individual
 estimates should be plotted.}
@@ -39,6 +42,13 @@ individual-level distributions.}
 \item{subject}{Vector indicating the subjects to plot when
 `subject_effects = TRUE`. Default is `NULL`, which means
 all subjects are plotted.}
+
+\item{vrb}{Optional string specifying the variable to plot when using
+categorical data.}
+
+\item{burn_in}{Optional integer specifying the number of burnin iterations.}
+
+\item{errorbar}{Optional string indicating the type of error bar to use.}
 }
 \value{
 Object of type `ggplot2::gg` plotting emission distributions.
