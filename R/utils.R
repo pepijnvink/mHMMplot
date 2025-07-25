@@ -167,9 +167,9 @@ scale_color_mhmm <- function(which = "color") {
             "#9C755F",
             "#BAB0AC")
   if(which == "color") {
-    ggplot2::scale_color_manual(clrs)
+    ggplot2::scale_color_manual(values = clrs)
   } else if (which == "fill") {
-    ggplot2::scale_fill_manual(clrs)
+    ggplot2::scale_fill_manual(values = clrs)
   }
 }
 

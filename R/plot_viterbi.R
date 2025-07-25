@@ -2,7 +2,7 @@
 #'
 #' @param states Data Frame with inferred states
 #' obtained using [mHMMbayes::vit_HMM()] or object of class `mHMMbayes:mHMM`.
-#' @param s_data Data Frame with data used to infer states usingthe viterbi
+#' @param s_data Data Frame with data used to infer states using the Viterbi
 #' algorithm. Only required when the object given to `states`
 #' is of class `mHMMbayes::mHMM`.
 #' @param subject Optional numeric vector with indices of subjects to plot.
@@ -127,13 +127,14 @@ plot_viterbi <- function(states, s_data, subject = NULL) {
       )
     ) +
     ggplot2::facet_grid(rows = ggplot2::vars(.data$subj)) +
-    ggplot2::xlab("Beep") +
+    ggplot2::xlab("Beep")
+  gg <- gg +
+    theme_mhmm() +
+    scale_color_mhmm(which = "fill") +
     ggplot2::theme(
       axis.title.y = ggplot2::element_blank(),
       axis.text.y = ggplot2::element_blank(),
       axis.ticks.y = ggplot2::element_blank()
     )
-  gg <- gg +
-    ggplot2::theme_bw()
   return(gg)
 }

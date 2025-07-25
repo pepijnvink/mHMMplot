@@ -36,6 +36,8 @@ mHMMplot package and the mHMMbayes package, and simulate some data, as
 well as run a model.
 
 ``` r
+# install.packages("mHMMbayes")
+# install.packages("ggplot2")
 library(mHMMplot)
 library(mHMMbayes)
 library(ggplot2)

@@ -9,7 +9,7 @@
 #' @param cat_labels Character vector of labels for the categorical variables.
 #' @param alpha Numeric value indicating transparency of subject-specific
 #' posterior densities.
-#' @param position Object created with ggplot2::position_jitter indicating
+#' @param jitter Object created with ggplot2::position_jitter indicating
 #' the amount of jitter.
 #' @param line Logical indicating whether to plot lines when plotting
 #' individual-level distributions.
@@ -93,7 +93,7 @@ plot_emiss <- function(model,
                        type = "bar",
                        subject_effects = TRUE,
                        cat_labels = NULL,
-                       position = ggplot2::position_jitter(
+                       jitter = ggplot2::position_jitter(
                          width = 0.2,
                          height = 0
                        ),
@@ -296,7 +296,7 @@ plot_emiss <- function(model,
           alpha = alpha,
           color = "black",
           pch = 21,
-          position = position,
+          position = jitter,
           size = 3
         )
       if (line) {
@@ -354,7 +354,7 @@ plot_emiss <- function(model,
     ggplot2::xlab("Mood State") +
     ggplot2::guides(fill = "none", color = "none") +
     theme_mhmm() +
-    ggthemes::scale_fill_tableau()
+    scale_color_mhmm(which = "fill")
   if (distr == "categorical") {
     gg <- gg + ggplot2::ylab("Probability")
   }
