@@ -121,7 +121,7 @@ plot_emiss <- function(model,
   if (type == "bar" | type == "point") {
     emiss_group <- mHMMbayes::obtain_emiss(object = model, level = "group", burn_in = burn_in)
     if (distr == "continuous") {
-      facets <- names(emiss_group)
+      vrb_names <- names(emiss_group)
       emiss_group <- lapply(emiss_group, function(x, m) {
         rownames(x) <- paste0(1:m)
         x
@@ -134,7 +134,7 @@ plot_emiss <- function(model,
         dplyr::bind_rows(.id = "Dep") %>%
         dplyr::mutate(
           State = factor(.data$State, labels = state_labels),
-          Dep = factor(.data$Dep, labels = facets, levels = facets)
+          Dep = factor(.data$Dep, labels = vrb_names, levels = vrb_names)
         )
       if (!is.null(errorbar)) {
         if (errorbar == "sd") {
@@ -185,9 +185,7 @@ plot_emiss <- function(model,
       rownames(emiss_group) <- paste0(1:m)
       q <- ncol(emiss_group)
       if (is.null(cat_labels)) {
-        facets <- paste0("Category ", 1:q)
-      } else {
-        facets <- cat_labels
+        cat_labels <- paste0("Category ", 1:q)
       }
       emiss_group_melt <- as.data.frame(emiss_group) %>%
         tibble::rownames_to_column(var = "State") %>%
@@ -198,12 +196,12 @@ plot_emiss <- function(model,
         ) %>%
         dplyr::mutate(
           State = factor(.data$State, labels = state_labels),
-          Dep = factor(.data$Dep, labels = facets, levels = facets)
+          Dep = factor(.data$Dep, labels = cat_labels, levels = cat_labels)
         )
       if (!is.null(errorbar)) {
         if (errorbar == "sd") {
           cli::cli_warn(c("x" = "Errorbars for between-person standard deviation cannot be computed for categorical data.",
-                           "i" = "No error bar will be shown."))
+                          "i" = "No error bar will be shown."))
           errorbar <- NULL
         } else if (errorbar == "hpd") {
           hpd <- model[["emiss_prob_bar"]][[vrb]] %>%
@@ -253,9 +251,9 @@ plot_emiss <- function(model,
                          labels = state_labels
           ),
           Dep = factor(c(rep(
-            facets,
+            vrb_labels,
             each = m * length(subject)
-          )), levels = facets)
+          )), levels = vrb_labels)
         )
         gg_emiss_subject$Mean <- mapply(
           function(x, y, z) {
@@ -272,9 +270,9 @@ plot_emiss <- function(model,
                          labels = state_labels
           ),
           Dep = factor(c(rep(
-            facets,
+            cat_labels,
             each = m * length(subject)
-          )), levels = facets)
+          )), levels = cat_labels)
         )
         gg_emiss_subject$Mean <- mapply(
           function(x, y, z) {
@@ -321,14 +319,14 @@ plot_emiss <- function(model,
     }
   } else if (type == "boxplot") {
     emiss_subj <- mHMMbayes::obtain_emiss(object = model, level = "subject")
-    facets <- names(emiss_subj)
+    vrb_labels <- names(emiss_subj)
     gg_emiss_subject <- data.frame(
       Subj = rep(rep(1:n_subj, each = m), n_dep),
       State = factor(rep(1:m, n_subj * n_dep), labels = state_labels),
       Dep = factor(c(rep(
-        facets,
+        vrb_labels,
         each = m * n_subj
-      )), levels = facets)
+      )), levels = vrb_labels)
     )
     gg_emiss_subject$Mean <- mapply(
       function(x, y, z) {
