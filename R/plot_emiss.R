@@ -89,27 +89,29 @@
 #'
 #' plot_emiss(out_3st_cont_sim)
 #' }
-plot_emiss <- function(model,
-                       type = "bar",
-                       subject_effects = TRUE,
-                       cat_labels = NULL,
-                       jitter = ggplot2::position_jitter(
-                         width = 0.2,
-                         height = 0
-                       ),
-                       alpha = 0.75,
-                       line = FALSE,
-                       subject = NULL,
-                       vrb = NULL,
-                       burn_in = NULL,
-                       errorbar = NULL) {
+plot_emiss <- function(
+  model,
+  type = "bar",
+  subject_effects = TRUE,
+  cat_labels = NULL,
+  jitter = ggplot2::position_jitter(
+    width = 0.2,
+    height = 0
+  ),
+  alpha = 0.75,
+  line = FALSE,
+  subject = NULL,
+  vrb = NULL,
+  burn_in = NULL,
+  errorbar = NULL
+) {
   check_model(model, classes = "mHMM")
   m <- model$input$m
   n_subj <- model$input$n_subj
   if (is.null(subject)) {
     subject <- 1:n_subj
   }
-  if (is.null(burn_in)){
+  if (is.null(burn_in)) {
     burn_in <- model$input$burn_in
   }
   if (type == "point" & is.null(errorbar)) {
@@ -119,13 +121,21 @@ plot_emiss <- function(model,
   distr <- model$input$data_distr
   n_dep <- model$input$n_dep
   if (type == "bar" | type == "point") {
-    emiss_group <- mHMMbayes::obtain_emiss(object = model, level = "group", burn_in = burn_in)
+    emiss_group <- mHMMbayes::obtain_emiss(
+      object = model,
+      level = "group",
+      burn_in = burn_in
+    )
     if (distr == "continuous") {
       vrb_names <- names(emiss_group)
-      emiss_group <- lapply(emiss_group, function(x, m) {
-        rownames(x) <- paste0(1:m)
-        x
-      }, m = m)
+      emiss_group <- lapply(
+        emiss_group,
+        function(x, m) {
+          rownames(x) <- paste0(1:m)
+          x
+        },
+        m = m
+      )
       emiss_group_melt <- lapply(emiss_group, function(x) {
         x %>%
           as.data.frame() %>%
@@ -138,11 +148,10 @@ plot_emiss <- function(model,
         )
       if (!is.null(errorbar)) {
         if (errorbar == "sd") {
-          emiss_group_melt$sdmu <- lapply(model$emiss_varmu_bar,
-                                          function(x) {
-                                            x[-(1:burn_in),] %>%
-                                              apply(2, stats::median)
-                                          }) %>%
+          emiss_group_melt$sdmu <- lapply(model$emiss_varmu_bar, function(x) {
+            x[-(1:burn_in), ] %>%
+              apply(2, stats::median)
+          }) %>%
             unlist() %>%
             sqrt()
           emiss_group_melt <- emiss_group_melt %>%
@@ -152,33 +161,33 @@ plot_emiss <- function(model,
             )
           note_errorbar <- "Errorbars represent the between-person standard deviation"
         } else if (errorbar == "hpd") {
-          hpd <- lapply(model$emiss_mu_bar,
-                        function(x) {
-                          coda::mcmc(x,
-                                     start = burn_in + 1) %>%
-                            coda::HPDinterval() %>%
-                            as.data.frame()
-                        }) %>%
+          hpd <- lapply(model$emiss_mu_bar, function(x) {
+            coda::mcmc(x, start = burn_in + 1) %>%
+              coda::HPDinterval() %>%
+              as.data.frame()
+          }) %>%
             dplyr::bind_rows()
           emiss_group_melt <- cbind(emiss_group_melt, hpd)
           note_errorbar <- "Errorbars represent the 95% highest posterior density interval"
         } else {
-          eti <- lapply(model$emiss_mu_bar,
-                        function(x) {
-                          apply(x[-(1:burn_in), ], 2, stats::quantile,
-                                probs = c(0.025, 0.975)
-                          ) %>%
-                            t() %>%
-                            as.data.frame()
-                        }) %>%
+          eti <- lapply(model$emiss_mu_bar, function(x) {
+            apply(
+              x[-(1:burn_in), ],
+              2,
+              stats::quantile,
+              probs = c(0.025, 0.975)
+            ) %>%
+              t() %>%
+              as.data.frame()
+          }) %>%
             dplyr::bind_rows() %>%
-            dplyr::rename_with(~c("lower", "upper"))
+            dplyr::rename_with(~ c("lower", "upper"))
           emiss_group_melt <- cbind(emiss_group_melt, eti)
           note_errorbar <- "Errorbars represent the 95% equal-tailed interval"
         }
       }
     } else if (distr == "categorical") {
-      if(is.null(vrb)){
+      if (is.null(vrb)) {
         vrb <- model$input$dep_labels[[1]]
       }
       emiss_group <- emiss_group[[vrb]]
@@ -190,7 +199,7 @@ plot_emiss <- function(model,
       emiss_group_melt <- as.data.frame(emiss_group) %>%
         tibble::rownames_to_column(var = "State") %>%
         tidyr::pivot_longer(
-          cols = -State,
+          cols = -tidyselect::all_of('State'),
           names_to = "Dep",
           values_to = "Mean"
         ) %>%
@@ -200,21 +209,28 @@ plot_emiss <- function(model,
         )
       if (!is.null(errorbar)) {
         if (errorbar == "sd") {
-          cli::cli_warn(c("x" = "Errorbars for between-person standard deviation cannot be computed for categorical data.",
-                          "i" = "No error bar will be shown."))
+          cli::cli_warn(c(
+            "x" = "Errorbars for between-person standard deviation cannot be computed for categorical data.",
+            "i" = "No error bar will be shown."
+          ))
           errorbar <- NULL
         } else if (errorbar == "hpd") {
           hpd <- model[["emiss_prob_bar"]][[vrb]] %>%
-            coda::mcmc(start = burn_in+1) %>%
+            coda::mcmc(start = burn_in + 1) %>%
             coda::HPDinterval() %>%
             as.data.frame()
           emiss_group_melt <- cbind(emiss_group_melt, hpd)
           note_errorbar <- "Errorbars represent the 95% highest posterior density interval"
         } else {
-          eti <- apply(model[["emiss_prob_bar"]][[vrb]], 2, stats::quantile, probs = c(0.025, 0.975)) %>%
+          eti <- apply(
+            model[["emiss_prob_bar"]][[vrb]],
+            2,
+            stats::quantile,
+            probs = c(0.025, 0.975)
+          ) %>%
             t() %>%
             as.data.frame() %>%
-            dplyr::rename_with(~c("lower", "upper"))
+            dplyr::rename_with(~ c("lower", "upper"))
           emiss_group_melt <- cbind(emiss_group_melt, eti)
           note_errorbar <- "Errorbars represent the 95% equal-tailed interval"
         }
@@ -238,22 +254,30 @@ plot_emiss <- function(model,
         )
       )
     }
-    if(type == "bar") {
+    if (type == "bar") {
       gg <- gg +
         ggplot2::geom_col()
     }
     if (subject_effects) {
-      emiss_subj <- mHMMbayes::obtain_emiss(object = model, level = "subject", burn_in = burn_in)
+      emiss_subj <- mHMMbayes::obtain_emiss(
+        object = model,
+        level = "subject",
+        burn_in = burn_in
+      )
       if (distr == "continuous") {
         gg_emiss_subject <- data.frame(
           Subj = rep(rep(subject, each = m), n_dep),
-          State = factor(rep(1:m, length(subject) * n_dep),
-                         labels = state_labels
+          State = factor(
+            rep(1:m, length(subject) * n_dep),
+            labels = state_labels
           ),
-          Dep = factor(c(rep(
-            vrb_labels,
-            each = m * length(subject)
-          )), levels = vrb_labels)
+          Dep = factor(
+            c(rep(
+              vrb_names,
+              each = m * length(subject)
+            )),
+            levels = vrb_names
+          )
         )
         gg_emiss_subject$Mean <- mapply(
           function(x, y, z) {
@@ -263,16 +287,17 @@ plot_emiss <- function(model,
           y = gg_emiss_subject$Subj,
           z = gg_emiss_subject$State
         )
-      } else if (distr == "categorical"){
+      } else if (distr == "categorical") {
         gg_emiss_subject <- data.frame(
           Subj = rep(rep(subject, each = m), q),
-          State = factor(rep(1:m, length(subject) * q),
-                         labels = state_labels
-          ),
-          Dep = factor(c(rep(
-            cat_labels,
-            each = m * length(subject)
-          )), levels = cat_labels)
+          State = factor(rep(1:m, length(subject) * q), labels = state_labels),
+          Dep = factor(
+            c(rep(
+              cat_labels,
+              each = m * length(subject)
+            )),
+            levels = cat_labels
+          )
         )
         gg_emiss_subject$Mean <- mapply(
           function(x, y, z) {
@@ -314,7 +339,11 @@ plot_emiss <- function(model,
     if (!is.null(errorbar)) {
       gg <- gg +
         ggplot2::geom_point(size = 4) +
-        ggplot2::geom_segment(ggplot2::aes(y = .data$lower, yend = .data$upper), linewidth = 2, lineend = "round") +
+        ggplot2::geom_segment(
+          ggplot2::aes(y = .data$lower, yend = .data$upper),
+          linewidth = 2,
+          lineend = "round"
+        ) +
         ggplot2::labs(caption = note_errorbar)
     }
   } else if (type == "boxplot") {
@@ -323,10 +352,13 @@ plot_emiss <- function(model,
     gg_emiss_subject <- data.frame(
       Subj = rep(rep(1:n_subj, each = m), n_dep),
       State = factor(rep(1:m, n_subj * n_dep), labels = state_labels),
-      Dep = factor(c(rep(
-        vrb_labels,
-        each = m * n_subj
-      )), levels = vrb_labels)
+      Dep = factor(
+        c(rep(
+          vrb_labels,
+          each = m * n_subj
+        )),
+        levels = vrb_labels
+      )
     )
     gg_emiss_subject$Mean <- mapply(
       function(x, y, z) {
