@@ -13,21 +13,21 @@
 #'
 #' @keywords internal
 #' @noRd
-check_model <- function(model,
-                        classes = "mHMM",
-                        fns = classes) {
+check_model <- function(model, classes = "mHMM", fns = classes) {
   if (is.null(model)) {
-    cls_names <- cli::cli_vec(paste0("mHMMbayes::", classes),
-                              style = list(
-                                "vec-last" = ", or ",
-                                "vec-sep2" = " or "
-                              )
+    cls_names <- cli::cli_vec(
+      paste0("mHMMbayes::", classes),
+      style = list(
+        "vec-last" = ", or ",
+        "vec-sep2" = " or "
+      )
     )
-    fns_names <- cli::cli_vec(paste0("mHMMbayes::", fns),
-                              style = list(
-                                "vec-last" = ", or ",
-                                "vec-sep2" = " or "
-                              )
+    fns_names <- cli::cli_vec(
+      paste0("mHMMbayes::", fns),
+      style = list(
+        "vec-last" = ", or ",
+        "vec-sep2" = " or "
+      )
     )
     cli::cli_abort(
       c(
@@ -38,17 +38,19 @@ check_model <- function(model,
     )
   }
   if (!inherits(model, classes)) {
-    cls_names <- cli::cli_vec(paste0("mHMMbayes::", classes),
-                              style = list(
-                                "vec-last" = ", or ",
-                                "vec-sep2" = " or "
-                              )
+    cls_names <- cli::cli_vec(
+      paste0("mHMMbayes::", classes),
+      style = list(
+        "vec-last" = ", or ",
+        "vec-sep2" = " or "
+      )
     )
-    fns_names <- cli::cli_vec(paste0("mHMMbayes::", fns),
-                              style = list(
-                                "vec-last" = ", or ",
-                                "vec-sep2" = " or "
-                              )
+    fns_names <- cli::cli_vec(
+      paste0("mHMMbayes::", fns),
+      style = list(
+        "vec-last" = ", or ",
+        "vec-sep2" = " or "
+      )
     )
     cli::cli_abort(
       c(
@@ -104,11 +106,12 @@ check_vrb <- function(model, vrb, vctr = TRUE) {
     vrb <- vrb[1]
   }
   if (vrb %nin% model$input$dep_labels) {
-    dep_labs <- cli::cli_vec(model$input$dep_labels,
-                             style = list(
-                               "vec-last" = ", or ",
-                               "vec-sep2" = " or "
-                             )
+    dep_labs <- cli::cli_vec(
+      model$input$dep_labels,
+      style = list(
+        "vec-last" = ", or ",
+        "vec-sep2" = " or "
+      )
     )
     cli::cli_abort(
       c(
@@ -156,17 +159,19 @@ theme_mhmm <- function() {
 #' @keywords internal
 #' @noRd
 scale_color_mhmm <- function(which = "color") {
-  clrs <- c("#4E79A7",
-            "#F28E2B",
-            "#E15759",
-            "#499894",
-            "#59A14F",
-            "#EDC948",
-            "#B07AA1",
-            "#d37295",
-            "#9C755F",
-            "#BAB0AC")
-  if(which == "color") {
+  clrs <- c(
+    "#4E79A7",
+    "#F28E2B",
+    "#E15759",
+    "#499894",
+    "#59A14F",
+    "#EDC948",
+    "#B07AA1",
+    "#d37295",
+    "#9C755F",
+    "#BAB0AC"
+  )
+  if (which == "color") {
     ggplot2::scale_color_manual(values = clrs)
   } else if (which == "fill") {
     ggplot2::scale_fill_manual(values = clrs)
@@ -188,3 +193,81 @@ scale_color_mhmm <- function(which = "color") {
 #' @param rhs A function call using the magrittr semantics.
 #' @return The result of calling `rhs(lhs)`.
 NULL
+
+#' @keywords internal
+# tidy gamma output for tidy_mHMM methods (group level)
+tidy_gamma_group <- function(model, m, burn_in, J, quantiles) {
+  median_gamma <- apply(model$gamma_int_bar[(burn_in + 1):J, ], 2, stats::median) %>%
+    matrix(nrow = m, byrow = TRUE) %>%
+    mHMMbayes::int_to_prob() %>%
+    t() %>%
+    as.vector()
+  mean_gamma <- apply(model$gamma_int_bar[(burn_in + 1):J, ], 2, mean) %>%
+    matrix(nrow = m, byrow = TRUE) %>%
+    mHMMbayes::int_to_prob() %>%
+    t() %>%
+    as.vector()
+  ci_gamma <- apply(
+    model$gamma_prob_bar[(burn_in + 1):J, ],
+    2,
+    stats::quantile,
+    quantiles
+  ) %>%
+    t()
+  allpars <- data.frame(
+    from_state = factor(paste('state', rep(1:m, each = m))),
+    to_state = factor(paste('state', rep(1:m, times = m))),
+    level = 'group'
+  ) %>%
+    dplyr::mutate(median = median_gamma, mean = mean_gamma) %>%
+    cbind(ci_gamma) %>%
+    tibble::remove_rownames() %>%
+    tibble::as_tibble()
+  return(allpars)
+}
+
+#' @keywords internal
+# tidy gamma output for tidy_mHMM methods (subject level)
+tidy_gamma_subj <- function(model, m, subjects, burn_in, J, quantiles) {
+  all_gamma <- vector('list', length(subjects))
+  for (i in subjects) {
+    median_gamma <- apply(
+      model$gamma_int_subj[[i]][(burn_in + 1):J, ],
+      2,
+      stats::median
+    ) %>%
+      matrix(nrow = m, byrow = TRUE) %>%
+      mHMMbayes::int_to_prob() %>%
+      t() %>%
+      as.vector()
+    mean_gamma <- apply(
+      model$gamma_int_subj[[i]][(burn_in + 1):J, ],
+      2,
+      mean
+    ) %>%
+      matrix(nrow = m, byrow = TRUE) %>%
+      mHMMbayes::int_to_prob() %>%
+      t() %>%
+      as.vector()
+    ci_gamma <- apply(
+      model$PD_subj[[i]]$trans_prob[(burn_in + 1):J, ],
+      2,
+      stats::quantile,
+      quantiles
+    ) %>%
+      t()
+    all_gamma[[i]] <- data.frame(
+      from_state = factor(paste('state', rep(1:m, each = m))),
+      to_state = factor(paste('state', rep(1:m, times = m))),
+      level = 'subject',
+      subject = factor(paste('subject', i))
+    ) %>%
+      dplyr::mutate(median = median_gamma, mean = mean_gamma) %>%
+      cbind(ci_gamma) %>%
+      tibble::remove_rownames() %>%
+      tibble::as_tibble()
+  }
+  allpars <- all_gamma %>%
+    dplyr::bind_rows()
+  return(allpars)
+}
