@@ -7,19 +7,21 @@
 #' @param subject_effects Logical specifying whether a layer of individual
 #' estimates should be plotted.
 #' @param cat_labels Character vector of labels for the categorical variables.
-#' @param alpha Numeric value indicating transparency of subject-specific
-#' posterior densities.
-#' @param jitter Object created with ggplot2::position_jitter indicating
-#' the amount of jitter.
 #' @param line Logical indicating whether to plot lines when plotting
 #' individual-level distributions.
 #' @param subject Vector indicating the subjects to plot when
 #' `subject_effects = TRUE`. Default is `NULL`, which means
 #' all subjects are plotted.
 #' @param vrb Optional string specifying the variable to plot when using
-#' categorical data.
-#' @param burn_in Optional integer specifying the number of burnin iterations.
+#' categorical data. If not specified, it plots the first variable.
+#' @param facet String specifying the dimension to facet. Takes 'state' (default) or 'vrb'.
 #' @param errorbar Optional string indicating the type of error bar to use.
+#' @param errorbar_prob Optional scalar between 0 and 1 indicating the confidence level to create errorbars for. Only used when `errorbar` is equal to `eti` or `hpd`.
+#' @param alpha Numeric value indicating transparency of subject-specific
+#' posterior densities.
+#' @param jitter Object created with ggplot2::position_jitter indicating
+#' the amount of jitter.
+#' @param burn_in Optional integer specifying the number of burnin iterations.
 #'
 #' @return
 #' Object of type `ggplot2::gg` plotting emission distributions.
@@ -93,16 +95,18 @@ plot_emiss <- function(model,
                        type = "bar",
                        subject_effects = TRUE,
                        cat_labels = NULL,
+                       line = FALSE,
+                       subject = NULL,
+                       vrb = NULL,
+                       facet = 'state',
+                       errorbar = 'eti',
+                       errorbar_prob = 0.95,
+                       alpha = 0.75,
                        jitter = ggplot2::position_jitter(
                          width = 0.2,
                          height = 0
                        ),
-                       alpha = 0.75,
-                       line = FALSE,
-                       subject = NULL,
-                       vrb = NULL,
-                       burn_in = NULL,
-                       errorbar = NULL) {
+                       burn_in = NULL) {
   check_model(model, classes = "mHMM")
   m <- model$input$m
   n_subj <- model$input$n_subj
@@ -112,8 +116,38 @@ plot_emiss <- function(model,
   if (is.null(burn_in)){
     burn_in <- model$input$burn_in
   }
+  if(!is.null(errorbar)){
+    if(errorbar %nin% c('sd', 'hdi', 'eti')){
+      cli::cli_abort(c(
+        "Argument {.var errorbar} takes 'sd', 'hdi' or 'eti'",
+        'x' = 'Invalid entry for argument {.var errorbar}',
+        'i' = 'Please specify a different value'
+      ))
+    }
+    if((length(errorbar_prob) != 1)){
+      cli::cli_abort(c(
+        'Argument {.var errorbar} should be a single number between 0 and 1',
+        'x' = 'You specified a vector',
+        'i' = 'Please specify a different value'
+      ))
+    }
+    if(!is.numeric(errorbar_prob)){
+      cli::cli_abort(c(
+        'Argument {.var errorbar} should be a single number between 0 and 1',
+        'x' = 'You specified a value of class {.cls {class(errorbar_prob)}}',
+        'i' = 'Please specify a numeric value'
+      ))
+    }
+    if(errorbar_prob <= 0 | errorbar_prob >= 1){
+      cli::cli_abort(c(
+        'Argument {.var errorbar} should be a number between 0 and 1',
+        'x' = 'You specified a value outside of these bounds',
+        'i' = 'Please specify a numeric value between 0 and 1'
+      ))
+    }
+  }
   if (type == "point" & is.null(errorbar)) {
-    errorbar <- "hpd"
+    errorbar <- "eti"
   }
   state_labels <- paste("State", 1:m)
   distr <- model$input$data_distr
@@ -156,17 +190,18 @@ plot_emiss <- function(model,
                         function(x) {
                           coda::mcmc(x,
                                      start = burn_in + 1) %>%
-                            coda::HPDinterval() %>%
+                            coda::HPDinterval(prob = errorbar_prob) %>%
                             as.data.frame()
                         }) %>%
             dplyr::bind_rows()
           emiss_group_melt <- cbind(emiss_group_melt, hpd)
           note_errorbar <- "Errorbars represent the 95% highest posterior density interval"
-        } else {
+        } else if(errorbar == 'eti'){
+          bounds_errorbar <- c((1-errorbar_prob)/2, (1-(1-errorbar_prob)/2))
           eti <- lapply(model$emiss_mu_bar,
                         function(x) {
                           apply(x[-(1:burn_in), ], 2, stats::quantile,
-                                probs = c(0.025, 0.975)
+                                probs = bounds_errorbar
                           ) %>%
                             t() %>%
                             as.data.frame()
@@ -208,12 +243,13 @@ plot_emiss <- function(model,
         } else if (errorbar == "hpd") {
           hpd <- model[["emiss_prob_bar"]][[vrb]] %>%
             coda::mcmc(start = burn_in+1) %>%
-            coda::HPDinterval() %>%
+            coda::HPDinterval(prob = errorbar_prob) %>%
             as.data.frame()
           emiss_group_melt <- cbind(emiss_group_melt, hpd)
           note_errorbar <- "Errorbars represent the 95% highest posterior density interval"
-        } else {
-          eti <- apply(model[["emiss_prob_bar"]][[vrb]], 2, stats::quantile, probs = c(0.025, 0.975)) %>%
+        } else if(errorbar == 'eti') {
+          bounds_errorbar <- c((1-errorbar_prob)/2, (1-(1-errorbar_prob)/2))
+          eti <- apply(model[["emiss_prob_bar"]][[vrb]], 2, stats::quantile, probs = bounds_errorbar) %>%
             t() %>%
             as.data.frame() %>%
             dplyr::rename_with(~c("lower", "upper"))
@@ -223,22 +259,43 @@ plot_emiss <- function(model,
       }
     }
     if (type == "bar") {
-      gg <- ggplot2::ggplot(
-        data = emiss_group_melt,
-        mapping = ggplot2::aes(
-          x = .data$State,
-          y = .data$Mean,
-          fill = .data$Dep
+      if(facet == 'state'){
+        gg <- ggplot2::ggplot(
+          data = emiss_group_melt,
+          mapping = ggplot2::aes(
+            x = .data$Dep,
+            y = .data$Mean,
+            fill = .data$Dep
+          )
         )
-      )
+      } else if(facet == 'vrb'){
+        gg <- ggplot2::ggplot(
+          data = emiss_group_melt,
+          mapping = ggplot2::aes(
+            x = .data$State,
+            y = .data$Mean,
+            fill = .data$Dep
+          )
+        )
+      }
     } else if (type == "point") {
-      gg <- ggplot2::ggplot(
-        data = emiss_group_melt,
-        mapping = ggplot2::aes(
-          x = .data$State,
-          y = .data$Mean
+      if(facet == 'state'){
+        gg <- ggplot2::ggplot(
+          data = emiss_group_melt,
+          mapping = ggplot2::aes(
+            x = .data$Dep,
+            y = .data$Mean
+          )
         )
-      )
+      } else if(facet == 'vrb'){
+        gg <- ggplot2::ggplot(
+          data = emiss_group_melt,
+          mapping = ggplot2::aes(
+            x = .data$State,
+            y = .data$Mean
+          )
+        )
+      }
     }
     if(type == "bar") {
       gg <- gg +
@@ -285,32 +342,63 @@ plot_emiss <- function(model,
           z = gg_emiss_subject$State
         )
       }
-      gg <- gg +
-        ggplot2::geom_jitter(
-          data = gg_emiss_subject,
-          mapping = ggplot2::aes(
-            x = .data$State,
-            y = .data$Mean,
-            fill = .data$Dep
-          ),
-          alpha = alpha,
-          color = "black",
-          pch = 21,
-          position = jitter,
-          size = 3
-        )
-      if (line) {
+      if(facet == 'state'){
         gg <- gg +
-          ggplot2::geom_line(
+          ggplot2::geom_jitter(
+            data = gg_emiss_subject,
+            mapping = ggplot2::aes(
+              x = .data$Dep,
+              y = .data$Mean,
+              fill = .data$Dep
+            ),
+            alpha = alpha,
+            color = "black",
+            pch = 21,
+            position = jitter,
+            size = 3
+          )
+        if (line) {
+          gg <- gg +
+            ggplot2::geom_line(
+              data = gg_emiss_subject,
+              mapping = ggplot2::aes(
+                x = .data$Dep,
+                y = .data$Mean,
+                group = .data$Subj
+              ),
+              alpha = alpha,
+              color = "grey"
+            )
+        }
+
+      } else if(facet == 'vrb'){
+        gg <- gg +
+          ggplot2::geom_jitter(
             data = gg_emiss_subject,
             mapping = ggplot2::aes(
               x = .data$State,
               y = .data$Mean,
-              group = .data$Subj
+              fill = .data$Dep
             ),
             alpha = alpha,
-            color = "grey"
+            color = "black",
+            pch = 21,
+            position = jitter,
+            size = 3
           )
+        if (line) {
+          gg <- gg +
+            ggplot2::geom_line(
+              data = gg_emiss_subject,
+              mapping = ggplot2::aes(
+                x = .data$State,
+                y = .data$Mean,
+                group = .data$Subj
+              ),
+              alpha = alpha,
+              color = "grey"
+            )
+        }
       }
     }
     if (!is.null(errorbar)) {
@@ -348,13 +436,17 @@ plot_emiss <- function(model,
     ) +
       ggplot2::geom_boxplot()
   }
+  if(facet == 'state'){
+    gg <- gg +
+      ggplot2::facet_grid(cols = ggplot2::vars(.data$State))
+  } else {
+    gg <- gg +
+      ggplot2::facet_grid(cols = ggplot2::vars(.data$Dep))
+  }
   gg <- gg +
-    ggplot2::facet_grid(cols = ggplot2::vars(.data$Dep)) +
     ggplot2::theme(legend.position = "none") +
     ggplot2::xlab("Mood State") +
-    ggplot2::guides(fill = "none", color = "none") +
-    theme_mhmm() +
-    scale_color_mhmm(which = "fill")
+    ggplot2::guides(fill = "none", color = "none")
   if (distr == "categorical") {
     gg <- gg + ggplot2::ylab("Probability")
   }

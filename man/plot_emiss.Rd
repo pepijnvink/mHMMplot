@@ -9,13 +9,15 @@ plot_emiss(
   type = "bar",
   subject_effects = TRUE,
   cat_labels = NULL,
-  jitter = ggplot2::position_jitter(width = 0.2, height = 0),
-  alpha = 0.75,
   line = FALSE,
   subject = NULL,
   vrb = NULL,
-  burn_in = NULL,
-  errorbar = NULL
+  facet = "state",
+  errorbar = "eti",
+  errorbar_prob = 0.95,
+  alpha = 0.75,
+  jitter = ggplot2::position_jitter(width = 0.2, height = 0),
+  burn_in = NULL
 )
 }
 \arguments{
@@ -30,12 +32,6 @@ estimates should be plotted.}
 
 \item{cat_labels}{Character vector of labels for the categorical variables.}
 
-\item{jitter}{Object created with ggplot2::position_jitter indicating
-the amount of jitter.}
-
-\item{alpha}{Numeric value indicating transparency of subject-specific
-posterior densities.}
-
 \item{line}{Logical indicating whether to plot lines when plotting
 individual-level distributions.}
 
@@ -44,11 +40,21 @@ individual-level distributions.}
 all subjects are plotted.}
 
 \item{vrb}{Optional string specifying the variable to plot when using
-categorical data.}
+categorical data. If not specified, it plots the first variable.}
 
-\item{burn_in}{Optional integer specifying the number of burnin iterations.}
+\item{facet}{String specifying the dimension to facet. Takes 'state' (default) or 'vrb'.}
 
 \item{errorbar}{Optional string indicating the type of error bar to use.}
+
+\item{errorbar_prob}{Optional scalar between 0 and 1 indicating the confidence level to create errorbars for. Only used when `errorbar` is equal to `eti` or `hpd`.}
+
+\item{alpha}{Numeric value indicating transparency of subject-specific
+posterior densities.}
+
+\item{jitter}{Object created with ggplot2::position_jitter indicating
+the amount of jitter.}
+
+\item{burn_in}{Optional integer specifying the number of burnin iterations.}
 }
 \value{
 Object of type `ggplot2::gg` plotting emission distributions.
