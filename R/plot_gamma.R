@@ -81,12 +81,14 @@
 #'
 #' plot_gamma(out_3st_cont_sim)
 #' }
-plot_gamma <- function(model = NULL,
-                       level = "group",
-                       subject = NULL,
-                       digits = 2,
-                       facet = TRUE,
-                       ncol_facet = 2) {
+plot_gamma <- function(
+  model = NULL,
+  level = "group",
+  subject = NULL,
+  digits = 2,
+  facet = TRUE,
+  ncol_facet = 2
+) {
   check_model(
     model,
     classes = c("mHMM", "mHMM_gamma"),
@@ -171,9 +173,9 @@ plot_gamma <- function(model = NULL,
             )
         }) %>%
           dplyr::bind_rows(.id = "Subject") %>%
-          dplyr::mutate(Subject = factor(.data$Subject,
-            levels = paste("Subject", subject)
-          ))
+          dplyr::mutate(
+            Subject = factor(.data$Subject, levels = paste("Subject", subject))
+          )
         gg <- ggplot2::ggplot(
           data = gamma_melt,
           mapping = ggplot2::aes(
@@ -222,15 +224,17 @@ plot_gamma <- function(model = NULL,
             names_to = "From_To",
             values_to = "prob"
           ) %>%
-          dplyr::mutate(Subject = factor(.data$Subject,
-            levels = paste("Subject", subject)
-          ))
+          dplyr::mutate(
+            Subject = factor(.data$Subject, levels = paste("Subject", subject))
+          )
         gg <- gamma_matrix %>%
-          ggplot2::ggplot(mapping = ggplot2::aes(
-            x = .data$From_To,
-            y = .data$Subject,
-            fill = .data$prob
-          )) +
+          ggplot2::ggplot(
+            mapping = ggplot2::aes(
+              x = .data$From_To,
+              y = .data$Subject,
+              fill = .data$prob
+            )
+          ) +
           ggplot2::geom_tile(color = "white") +
           ggplot2::scale_fill_distiller(
             palette = "Spectral",
@@ -250,11 +254,13 @@ plot_gamma <- function(model = NULL,
           ggplot2::scale_y_discrete(limits = rev) +
           ggplot2::coord_fixed() +
           ggplot2::theme_bw() +
-          ggplot2::theme(axis.text.x = ggplot2::element_text(
-            angle = 45,
-            vjust = 1,
-            hjust = 1
-          ))
+          ggplot2::theme(
+            axis.text.x = ggplot2::element_text(
+              angle = 45,
+              vjust = 1,
+              hjust = 1
+            )
+          )
       }
       return(gg)
     }

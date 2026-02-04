@@ -83,18 +83,22 @@
 #'
 #' plot_posterior(model = out_3st_cont_sim)
 #' }
-plot_posterior <- function(model,
-                           component = "gamma",
-                           vrb = NULL,
-                           state_labels = NULL,
-                           cat_labels = NULL,
-                           burnin = NULL,
-                           alpha = 0.2) {
+plot_posterior <- function(
+  model,
+  component = "gamma",
+  vrb = NULL,
+  state_labels = NULL,
+  cat_labels = NULL,
+  burnin = NULL,
+  alpha = 0.2
+) {
   check_model(model, classes = c("mHMM", "mHMM_vary"))
   if (component %nin% c("gamma", "emiss")) {
     comp <- cli::cli_vec(c("gamma", "emiss"), style = list("vec-sep2" = " or "))
-    cli::cli_abort("Must provide {.val {comp}} to {.var component}
-                   to specify the component to plot.")
+    cli::cli_abort(
+      "Must provide {.val {comp}} to {.var component}
+                   to specify the component to plot."
+    )
   }
   if (is.null(burnin)) {
     burnin <- model$input$burn_in
@@ -145,7 +149,8 @@ plot_posterior <- function(model,
     }))
     facet_labels <- paste("From", state_labels, "to...")
     names(facet_labels) <- 1:m
-    data_group <- tibble::as_tibble(model$gamma_prob_bar[burnin:J, ],
+    data_group <- tibble::as_tibble(
+      model$gamma_prob_bar[burnin:J, ],
       .name_repair = "minimal"
     )
     data_subj <- lapply(model[["PD_subj"]], function(x) {
@@ -235,7 +240,8 @@ plot_posterior <- function(model,
           )
         }))
       }))
-      data_group <- tibble::as_tibble(model$emiss_prob_bar[[vrb]][burnin:J, ],
+      data_group <- tibble::as_tibble(
+        model$emiss_prob_bar[[vrb]][burnin:J, ],
         .name_repair = "minimal"
       )
       data_subj <- lapply(model[["PD_subj"]], function(x) {
@@ -243,7 +249,8 @@ plot_posterior <- function(model,
           tibble::as_tibble(.name_repair = "minimal") %>%
           dplyr::select(tidyselect::starts_with(paste0(
             "dep",
-            vrb_ind, "_"
+            vrb_ind,
+            "_"
           ))) %>%
           tidyr::pivot_longer(
             cols = tidyselect::everything(),
@@ -251,9 +258,10 @@ plot_posterior <- function(model,
             names_to = c("State", "Category"),
             names_pattern = names_pattern
           ) %>%
-          dplyr::mutate(State = factor(.data$State, labels = state_labels),
-                        Category = factor(.data$Category,
-                          labels = cat_labels))
+          dplyr::mutate(
+            State = factor(.data$State, labels = state_labels),
+            Category = factor(.data$Category, labels = cat_labels)
+          )
       })
       data_group_long <- data_group %>%
         tidyr::pivot_longer(
@@ -262,9 +270,10 @@ plot_posterior <- function(model,
           names_to = c("Category", "State"),
           names_pattern = "Emiss(\\d+)_S(\\d+)"
         ) %>%
-        dplyr::mutate(State = factor(.data$State, labels = state_labels),
-                      Category = factor(.data$Category,
-                        labels = cat_labels))
+        dplyr::mutate(
+          State = factor(.data$State, labels = state_labels),
+          Category = factor(.data$Category, labels = cat_labels)
+        )
       gg <- ggplot2::ggplot(data = data_group_long)
       for (i in 1:n_subj) {
         gg <- gg +
@@ -293,10 +302,12 @@ plot_posterior <- function(model,
         ggplot2::facet_wrap(~ .data$Category)
     } else if (data_distr == "continuous") {
       names_pattern <- paste0("dep", vrb_ind, "_S(\\d+)_([A-Za-z]+)")
-      data_group_mu <- tibble::as_tibble(model$emiss_mu_bar[[vrb]][burnin:J, ],
+      data_group_mu <- tibble::as_tibble(
+        model$emiss_mu_bar[[vrb]][burnin:J, ],
         .name_repair = "minimal"
       )
-      data_group_var <- tibble::as_tibble(model$emiss_sd_bar[[vrb]][burnin:J, ],
+      data_group_var <- tibble::as_tibble(
+        model$emiss_sd_bar[[vrb]][burnin:J, ],
         .name_repair = "minimal"
       )
       data_group <- cbind(data_group_mu, data_group_var)
@@ -309,7 +320,7 @@ plot_posterior <- function(model,
         ) %>%
         dplyr::mutate(
           State = factor(.data$State, labels = state_labels)
-          )
+        )
       data_subj <- lapply(model[["PD_subj"]], function(x) {
         x$cont_emiss[burnin:J, ] %>%
           tibble::as_tibble(.name_repair = "minimal") %>%
@@ -326,13 +337,14 @@ plot_posterior <- function(model,
       })
       gg <- ggplot2::ggplot(data = data_group_long)
       for (i in 1:n_subj) {
-        gg <- gg + ggplot2::stat_density(
-          data = data_subj[[i]],
-          mapping = ggplot2::aes(x = .data$Value, color = .data$State),
-          alpha = alpha,
-          geom = "line",
-          position = "identity"
-        )
+        gg <- gg +
+          ggplot2::stat_density(
+            data = data_subj[[i]],
+            mapping = ggplot2::aes(x = .data$Value, color = .data$State),
+            alpha = alpha,
+            geom = "line",
+            position = "identity"
+          )
       }
       gg <- gg +
         ggplot2::stat_density(
