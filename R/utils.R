@@ -196,8 +196,9 @@ NULL
 
 #' @keywords internal
 # tidy gamma output for tidy_mHMM methods (group level)
-tidy_gamma_group <- function(model, m, burn_in, J, quantiles) {
-  median_gamma <- apply(model$gamma_int_bar[(burn_in + 1):J, ], 2, stats::median) %>%
+tidy_gamma_group <- function(model, m, burn_in, J, quantiles, prob) {
+  if(prob){
+median_gamma <- apply(model$gamma_int_bar[(burn_in + 1):J, ], 2, stats::median) %>%
     matrix(nrow = m, byrow = TRUE) %>%
     mHMMbayes::int_to_prob() %>%
     t() %>%
@@ -223,14 +224,41 @@ tidy_gamma_group <- function(model, m, burn_in, J, quantiles) {
     cbind(ci_gamma) %>%
     tibble::remove_rownames() %>%
     tibble::as_tibble()
+  } else {
+    median_gamma <- apply(model$gamma_int_bar[(burn_in + 1):J, ], 2, stats::median) %>%
+    matrix(nrow = m, byrow = TRUE) %>%
+    t() %>%
+    as.vector()
+  mean_gamma <- apply(model$gamma_int_bar[(burn_in + 1):J, ], 2, mean) %>%
+    matrix(nrow = m, byrow = TRUE) %>%
+    t() %>%
+    as.vector()
+  ci_gamma <- apply(
+    model$gamma_int_bar[(burn_in + 1):J, ],
+    2,
+    stats::quantile,
+    quantiles
+  ) %>%
+    t()
+  allpars <- data.frame(
+    from_state = factor(paste('state', rep(1:m, each = m-1))),
+    to_state = factor(paste('state', rep(2:m, times = m))),
+    level = 'group'
+  ) %>%
+    dplyr::mutate(median = median_gamma, mean = mean_gamma) %>%
+    cbind(ci_gamma) %>%
+    tibble::remove_rownames() %>%
+    tibble::as_tibble()
+  }
   return(allpars)
 }
 
 #' @keywords internal
 # tidy gamma output for tidy_mHMM methods (subject level)
-tidy_gamma_subj <- function(model, m, subjects, burn_in, J, quantiles) {
+tidy_gamma_subj <- function(model, m, subjects, burn_in, J, quantiles, prob) {
   all_gamma <- vector('list', length(subjects))
-  for (i in subjects) {
+  if(prob){
+ for (i in subjects) {
     median_gamma <- apply(
       model$gamma_int_subj[[i]][(burn_in + 1):J, ],
       2,
@@ -267,6 +295,44 @@ tidy_gamma_subj <- function(model, m, subjects, burn_in, J, quantiles) {
       tibble::remove_rownames() %>%
       tibble::as_tibble()
   }
+  } else {
+     for (i in subjects) {
+    median_gamma <- apply(
+      model$gamma_int_subj[[i]][(burn_in + 1):J, ],
+      2,
+      stats::median
+    ) %>%
+      matrix(nrow = m, byrow = TRUE) %>%
+      t() %>%
+      as.vector()
+    mean_gamma <- apply(
+      model$gamma_int_subj[[i]][(burn_in + 1):J, ],
+      2,
+      mean
+    ) %>%
+      matrix(nrow = m, byrow = TRUE) %>%
+      t() %>%
+      as.vector()
+    ci_gamma <- apply(
+      model$gamma_int_subj[[i]][(burn_in + 1):J, ],
+      2,
+      stats::quantile,
+      quantiles
+    ) %>%
+      t()
+    all_gamma[[i]] <- data.frame(
+      from_state = factor(paste('state', rep(1:m, each = m-1))),
+      to_state = factor(paste('state', rep(2:m, times = m))),
+      level = 'subject',
+      subject = factor(paste('subject', i))
+    ) %>%
+      dplyr::mutate(median = median_gamma, mean = mean_gamma) %>%
+      cbind(ci_gamma) %>%
+      tibble::remove_rownames() %>%
+      tibble::as_tibble()
+  }
+  }
+ 
   allpars <- all_gamma %>%
     dplyr::bind_rows()
   return(allpars)

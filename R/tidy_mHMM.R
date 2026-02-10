@@ -17,9 +17,10 @@ tidy_mHMM <- function(model, ...) {
 #' @param model The model of class `mHMM`, fit using [mHMMbayes::mHMM()]
 #' @param param String, specifying the parameters to obtain a tidy summary for. Takes 'gamma' or 'emiss'
 #' @param level String specifying the level to obtain a tidy summary for. Takes 'group' or 'subject'
+#' @param quantiles Numeric vector specifying the quantiles to use to obtain credible intervals.
+#' @param prob If `TRUE`, returns parameters on the probability scale, if FALSE, returns parameters on the logit scale. Only used if `param = 'gamma'`
 #' @param subjects Optional numeric vector specifying the subjects to obtain a tidy summary for. Ignored when `level = 'group'`
 #' @param burn_in Optional integer values specifying the number of burnin samples to discard.
-#' @param quantiles Numeric vector specifying the quantiles to use to obtain credible intervals.
 #' @param ... Additional arguments to tidying method. Currently not used
 #'
 #' @returns A [tibble::tibble()] with summary for the model.
@@ -93,9 +94,10 @@ tidy_mHMM.cont <- function(
   model,
   param = 'gamma',
   level = "group",
+  prob = TRUE,
+  quantiles = c(0.025, 0.975),
   subjects = NULL,
   burn_in = NULL,
-  quantiles = c(0.025, 0.975),
   ...
 ) {
   if (level %nin% c('group', 'subject')) {
@@ -131,7 +133,7 @@ tidy_mHMM.cont <- function(
   }
   if (level == "group") {
     if (param == 'gamma') {
-      allpars <- tidy_gamma_group(model, m, burn_in, J, quantiles)
+      allpars <- tidy_gamma_group(model, m, burn_in, J, quantiles, prob)
     } else {
       median_emiss_mu <- model$emiss_mu_bar %>%
         lapply(function(x) x[(burn_in + 1):J, ] %>% apply(2, stats::median)) %>%
@@ -151,6 +153,12 @@ tidy_mHMM.cont <- function(
       mean_emiss_varmu <- model$emiss_varmu_bar %>%
         lapply(function(x) x[(burn_in + 1):J, ] %>% apply(2, mean)) %>%
         unlist()
+      median_emiss_sdmu <- model$emiss_varmu_bar %>%
+        lapply(function(x) x[(burn_in + 1):J, ] %>% sqrt() %>% apply(2, stats::median)) %>%
+        unlist()
+      mean_emiss_sdmu <- model$emiss_varmu_bar %>%
+        lapply(function(x) x[(burn_in + 1):J, ] %>% sqrt() %>% apply(2, mean)) %>%
+        unlist()
       ci_emiss_mu <- model$emiss_mu_bar %>%
         lapply(function(x) {
           x[(burn_in + 1):J, ] %>% apply(2, stats::quantile, quantiles) %>% t()
@@ -166,9 +174,16 @@ tidy_mHMM.cont <- function(
           x[(burn_in + 1):J, ] %>% apply(2, stats::quantile, quantiles) %>% t()
         }) %>%
         do.call(what = rbind)
+      ci_emiss_sdmu <- model$emiss_varmu_bar %>%
+        lapply(function(x) {
+          x[(burn_in + 1):J, ] %>% 
+            sqrt() %>%
+            apply(2, stats::quantile, quantiles) %>% t()
+        }) %>%
+        do.call(what = rbind)
       all_mu <- data.frame(
         param = 'mu',
-        vrb = factor(rep(vrbs, each = m)),
+        vrb = factor(rep(vrbs, each = m), levels = vrbs),
         state = factor(paste('state', rep(1:m, times = n_dep))),
         level = 'group'
       ) %>%
@@ -176,7 +191,7 @@ tidy_mHMM.cont <- function(
         cbind(ci_emiss_mu)
       all_sd <- data.frame(
         param = 'sd',
-        vrb = factor(rep(vrbs, each = m)),
+        vrb = factor(rep(vrbs, each = m), levels = vrbs),
         state = factor(paste('state', rep(1:m, times = n_dep))),
         level = 'group'
       ) %>%
@@ -184,13 +199,21 @@ tidy_mHMM.cont <- function(
         cbind(ci_emiss_sd)
       all_varmu <- data.frame(
         param = 'varmu',
-        vrb = factor(rep(vrbs, each = m)),
+        vrb = factor(rep(vrbs, each = m), levels = vrbs),
         state = factor(paste('state', rep(1:m, times = n_dep))),
         level = 'group'
       ) %>%
         dplyr::mutate(median = median_emiss_varmu, mean = mean_emiss_varmu) %>%
         cbind(ci_emiss_varmu)
-      allpars <- rbind(all_mu, all_sd, all_varmu) %>%
+      all_sdmu <- data.frame(
+        param = 'sdmu',
+        vrb = factor(rep(vrbs, each = m), levels = vrbs),
+        state = factor(paste('state', rep(1:m, times = n_dep))),
+        level = 'group'
+      ) %>%
+        dplyr::mutate(median = median_emiss_sdmu, mean = mean_emiss_sdmu) %>%
+        cbind(ci_emiss_sdmu)
+      allpars <- rbind(all_mu, all_sd, all_varmu, all_sdmu) %>%
         tibble::remove_rownames() %>%
         tibble::as_tibble()
     }
@@ -215,7 +238,7 @@ tidy_mHMM.cont <- function(
       subjects <- 1:n_subj
     }
     if (param == 'gamma') {
-      allpars <- tidy_gamma_subj(model, m, subjects, burn_in, J, quantiles)
+      allpars <- tidy_gamma_subj(model, m, subjects, burn_in, J, quantiles, prob)
     } else {
       all_emiss <- vector('list', length(subjects))
       for (i in subjects) {
@@ -237,7 +260,7 @@ tidy_mHMM.cont <- function(
           t()
         all_emiss[[i]] <- data.frame(
           param = 'mu',
-          vrb = factor(rep(vrbs, each = m)),
+          vrb = factor(rep(vrbs, each = m), levels = vrbs),
           state = factor(paste('state', rep(1:m, times = n_dep))),
           level = 'subject',
           subject = factor(paste('subject', i))
@@ -259,9 +282,10 @@ tidy_mHMM.cont <- function(
 #' @param model The model of class `mHMM`, fit using [mHMMbayes::mHMM()]
 #' @param param String, specifying the parameters to obtain a tidy summary for. Takes 'gamma' or 'emiss'
 #' @param level String specifying the level to obtain a tidy summary for. Takes 'group' or 'subject'
+#' @param prob If `TRUE`, returns parameters on the probability scale, if FALSE, returns parameters on the logit scale.
+#' @param quantiles Numeric vector specifying the quantiles to use to obtain credible intervals.
 #' @param subjects Optional numeric vector specifying the subjects to obtain a tidy summary for. Ignored when `level = 'group'`
 #' @param burn_in Optional integer values specifying the number of burnin samples to discard.
-#' @param quantiles Numeric vector specifying the quantiles to use to obtain credible intervals.
 #' @param ... Additional arguments to tidying method. Currently not used
 #'
 #' @returns A [tibble::tibble()] with summary for the model.
@@ -335,9 +359,10 @@ tidy_mHMM.cat <- function(
   model,
   param = 'gamma',
   level = "group",
+  prob = TRUE,
+  quantiles = c(0.025, 0.975),
   subjects = NULL,
   burn_in = NULL,
-  quantiles = c(0.025, 0.975),
   ...
 ) {
   if (level %nin% c('group', 'subject')) {
@@ -374,9 +399,10 @@ tidy_mHMM.cat <- function(
   }
   if (level == "group") {
     if (param == 'gamma') {
-      allpars <- tidy_gamma_group(model, m, burn_in, J, quantiles)
-    } else {
-      median_emiss <- lapply(model$emiss_int_bar, function(x) {
+      allpars <- tidy_gamma_group(model, m, burn_in, J, quantiles, prob)
+    } else if(param == 'emiss') {
+      if(prob){
+        median_emiss <- lapply(model$emiss_int_bar, function(x) {
         apply(x[(burn_in + 1):J, ], 2, stats::median) %>%
           matrix(byrow = TRUE, nrow = m) %>%
           mHMMbayes::int_to_prob() %>%
@@ -386,7 +412,7 @@ tidy_mHMM.cat <- function(
       }) %>%
         dplyr::bind_rows() %>%
         dplyr::rename(median = 'value')
-      mean_emiss <- lapply(model$emiss_int_bar, function(x) {
+        mean_emiss <- lapply(model$emiss_int_bar, function(x) {
         apply(x[(burn_in + 1):J, ], 2, mean) %>%
           matrix(byrow = TRUE, nrow = m) %>%
           mHMMbayes::int_to_prob() %>%
@@ -396,14 +422,13 @@ tidy_mHMM.cat <- function(
       }) %>%
         dplyr::bind_rows() %>%
         dplyr::rename(mean = 'value')
-
       ci_emiss <- lapply(model$emiss_prob_bar, function(x) {
-        apply(x, 2, stats::quantile, quantiles) %>%
+        apply(x[(burn_in + 1):J, ], 2, stats::quantile, quantiles) %>%
           t() %>%
           tibble::as_tibble()
       }) %>%
         dplyr::bind_rows()
-      allpars <- tibble::tibble(
+        allpars <- tibble::tibble(
         param = 'emiss_prob',
         vrb = factor(rep(vrbs, times = q_emiss * m)),
         category = factor(paste(
@@ -417,8 +442,48 @@ tidy_mHMM.cat <- function(
       ) %>%
         cbind(median_emiss, mean_emiss, ci_emiss) %>%
         tibble::as_tibble()
-    }
-  } else {
+    } else {
+        median_emiss <- lapply(model$emiss_int_bar, function(x) {
+        apply(x[(burn_in + 1):J, ], 2, stats::median) %>%
+          matrix(byrow = TRUE, nrow = m) %>%
+          t() %>%
+          as.vector() %>%
+          tibble::as_tibble()
+      }) %>%
+        dplyr::bind_rows() %>%
+        dplyr::rename(median = 'value')
+      mean_emiss <- lapply(model$emiss_int_bar, function(x) {
+        apply(x[(burn_in + 1):J, ], 2, mean) %>%
+          matrix(byrow = TRUE, nrow = m) %>%
+          t() %>%
+          as.vector() %>%
+          tibble::as_tibble()
+      }) %>%
+        dplyr::bind_rows() %>%
+        dplyr::rename(mean = 'value')
+      ci_emiss <- lapply(model$emiss_int_bar, function(x) {
+        apply(x[(burn_in + 1):J, ], 2, stats::quantile, quantiles) %>%
+          t() %>%
+          tibble::as_tibble()
+      }) %>%
+        dplyr::bind_rows()
+        allpars <- tibble::tibble(
+        param = 'emiss_int',
+        vrb = factor(rep(vrbs, times = (q_emiss-1) * m)),
+        category = factor(paste(
+          'category',
+          unlist(lapply(q_emiss, function(q) rep(2:q, times = m)))
+        )),
+        state = factor(unlist(lapply(q_emiss, function(q) {
+          rep(paste('state', 1:m), each = q-1)
+        }))),
+        level = 'group'
+      ) %>%
+        cbind(median_emiss, mean_emiss, ci_emiss) %>%
+        tibble::as_tibble()
+      }
+  }
+  } else if(level == 'subject'){
     n_subj <- model$input$n_subj
     if (is.null(subjects)) {
       subjects <- 1:n_subj
@@ -439,9 +504,10 @@ tidy_mHMM.cat <- function(
       subjects <- 1:n_subj
     }
     if (param == 'gamma') {
-      allpars <- tidy_gamma_subj(model, m, subjects, burn_in, J, quantiles)
-    } else {
-      all_emiss <- vector('list', length(subjects))
+      allpars <- tidy_gamma_subj(model, m, subjects, burn_in, J, quantiles, prob)
+    } else if(param == 'emiss'){
+      if(prob){
+        all_emiss <- vector('list', length(subjects))
       for (i in subjects) {
         median_emiss <- lapply(model$emiss_int_subj[[i]], function(x) {
           apply(x[(burn_in + 1):J, ], 2, stats::median) %>%
@@ -470,9 +536,15 @@ tidy_mHMM.cat <- function(
           quantiles
         ) %>%
           t()
+        ci_emiss <- lapply(model$emiss_int_bar, function(x) {
+        apply(x[(burn_in + 1):J, ], 2, stats::quantile, quantiles) %>%
+          t() %>%
+          tibble::as_tibble()
+      }) %>%
+        dplyr::bind_rows()
         all_emiss[[i]] <- tibble::tibble(
           param = 'emiss_prob',
-          vrb = factor(rep(vrbs, times = q_emiss * m)),
+          vrb = factor(rep(vrbs, times = q_emiss * m), levels = vrbs),
           category = factor(paste(
             'category',
             unlist(lapply(q_emiss, function(q) rep(1:q, times = m)))
@@ -488,6 +560,53 @@ tidy_mHMM.cat <- function(
       }
       allpars <- all_emiss %>%
         dplyr::bind_rows()
+      } else { ## if on logit scale
+        all_emiss <- vector('list', length(subjects))
+      for (i in subjects) {
+        median_emiss <- lapply(model$emiss_int_subj[[i]], function(x) {
+          apply(x[(burn_in + 1):J, ], 2, stats::median) %>%
+            matrix(byrow = TRUE, nrow = m) %>%
+            t() %>%
+            as.vector() %>%
+            tibble::as_tibble()
+        }) %>%
+          dplyr::bind_rows() %>%
+          dplyr::rename(median = 'value')
+        mean_emiss <- lapply(model$emiss_int_subj[[i]], function(x) {
+          apply(x[(burn_in + 1):J, ], 2, mean) %>%
+            matrix(byrow = TRUE, nrow = m) %>%
+            t() %>%
+            as.vector() %>%
+            tibble::as_tibble()
+        }) %>%
+          dplyr::bind_rows() %>%
+          dplyr::rename(mean = 'value')
+        ci_emiss <- lapply(model$emiss_int_subj[[i]], function(x) {
+          apply(x[(burn_in + 1):J, ], 2, stats::quantile, quantiles) %>%
+            matrix(byrow = TRUE, nrow = m) %>%
+            t() %>%
+            tibble::as_tibble()
+        }) %>%
+          dplyr::bind_rows()
+        all_emiss[[i]] <- tibble::tibble(
+          param = 'emiss_int',
+          vrb = factor(rep(vrbs, times = (q_emiss-1) * m), levels = vrbs),
+          category = factor(paste(
+            'category',
+            unlist(lapply(q_emiss, function(q) rep(2:q, times = m)))
+          )),
+          state = factor(unlist(lapply(q_emiss, function(q) {
+            rep(paste('state', 1:m), each = q-1)
+          }))),
+          level = 'subject',
+          subject = factor(paste('subject', i))
+        ) %>%
+          cbind(median_emiss, mean_emiss, ci_emiss) %>%
+          tibble::as_tibble()
+      }
+      allpars <- all_emiss %>%
+        dplyr::bind_rows()
+      }
     }
   }
   return(allpars)
