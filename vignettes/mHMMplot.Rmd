@@ -327,14 +327,6 @@ plot_emiss(
 )
 ```
 
-Another option is to plot boxplots of the subject-level emission means. This can be achieved by instead specifying `type = "boxplot"`:
-```{r}
-plot_emiss(
-  model = out_3st_cont, # specify model to plot
-  type = "boxplot", # obtain a bar chart
-)
-```
-
 # Plot transition probabilities
 `plot_gamma()` can be used to obtain a heat plot for the transition probabilities. To obtain a heat plot for the group-level transaition probabilities for the `nonverbal` dataset, specify:
 ```{r heatplot group-mHMM}
@@ -397,7 +389,7 @@ gamma_subj <- obtain_gamma(
 )
 ## Plot group-level transition probabilities
 plot_gamma(
-  model = gamma_subj, # transition probabilities. 'level' argument is redundant
+  model = gamma_subj # transition probabilities. 'level' argument is redundant
 )
 ```
 

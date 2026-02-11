@@ -37,7 +37,7 @@ test_that("Obtain plots (continuous)", {
       out_3st_cont,
       type = "point",
       subject_effects = TRUE,
-      errorbar = "eti"
+      errorbar = "ci"
     ),
     "ggplot"
   )
@@ -56,7 +56,7 @@ test_that("Obtain plots (categorical)", {
     plot_emiss(
       out_3st_cat,
       type = "bar",
-      errorbar = "hpd"
+      errorbar = "ci"
     ),
     "ggplot"
   )
@@ -65,7 +65,7 @@ test_that("Obtain plots (categorical)", {
       out_3st_cat,
       type = "bar",
       subject_effects = TRUE,
-      errorbar = "eti",
+      errorbar = "ci",
       vrb = "p_looking"
     ),
     "ggplot"
@@ -75,7 +75,7 @@ test_that("Obtain plots (categorical)", {
       out_3st_cat,
       type = "point",
       subject_effects = TRUE,
-      errorbar = "eti",
+      errorbar = "ci",
       vrb = "p_looking"
     ),
     "ggplot"
@@ -85,7 +85,7 @@ test_that("Obtain plots (categorical)", {
       out_3st_cat,
       type = "bar",
       subject_effects = TRUE,
-      errorbar = "hpd",
+      errorbar = "ci",
       vrb = "t_looking"
     ),
     "ggplot"
@@ -94,10 +94,10 @@ test_that("Obtain plots (categorical)", {
 
 test_that("Other Error and warning messages", {
   expect_error(plot_emiss(c(1, 2)))
-  expect_warning(plot_emiss(
+  expect_error(plot_emiss(
     out_3st_cat,
     type = "bar",
-    errorbar = "sd",
+    errorbar = "sd", # cannot plot this for categorical data
     vrb = "p_vocalizing"
   ))
 })
