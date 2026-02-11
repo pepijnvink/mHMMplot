@@ -311,7 +311,7 @@ plot_emiss.cont <- function(model,
           linewidth = 1.5,
           lineend = "round"
         ) +
-        ggplot2::geom_point(size = 3, aes(color = .data$vrb)) +
+        ggplot2::geom_point(size = 3, ggplot2::aes(color = .data$vrb)) +
         ggplot2::labs(caption = note_errorbar)
     }
   } else if (type == "boxplot") {
@@ -530,15 +530,10 @@ plot_emiss.cat <- function(model,
         dplyr::filter(param == 'emiss_prob')
       if (!is.null(errorbar)) {
         if (errorbar == "sd") {
-          emiss_group_sdmu <- emiss_group_melt %>%
-            dplyr::filter(param == 'sdmu') %>%
-            dplyr::pull(median)
-          emiss_group_mu <- emiss_group_mu %>%
-            dplyr::select(vrb, state, median) %>%
-            dplyr::rename(mean = median) %>%
-            dplyr::mutate(lower = mean - emiss_group_sdmu,
-            upper = mean + emiss_group_sdmu)
-          note_errorbar <- "Errorbars represent the between-person standard deviation"
+          cli::cli_abort(c("You specified `errorbar = 'sd'`.",
+                           "x" = "Cannot plot between-subject standard deviation for categorical data.",
+                           "i" = "Please specify `errorbar = NULL` or errorbar = 'ci'"
+                           ))
         } else if(errorbar == 'ci'){
           emiss_group_mu <- emiss_group_mu %>%
             dplyr::select(-c(param, level, mean)) %>%
@@ -666,7 +661,7 @@ plot_emiss.cat <- function(model,
           linewidth = 1.5,
           lineend = "round"
         ) +
-        ggplot2::geom_point(size = 3, aes(color = .data$category)) +
+        ggplot2::geom_point(size = 3, ggplot2::aes(color = .data$category)) +
         ggplot2::labs(caption = note_errorbar)
     }
   } else if (type == "boxplot") {
