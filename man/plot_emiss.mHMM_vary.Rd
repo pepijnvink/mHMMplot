@@ -18,12 +18,15 @@
   errorbar_prob = 0.95,
   alpha = 0.3,
   jitter = ggplot2::position_jitter(width = 0.2, height = 0),
-  burn_in = NULL
+  burn_in = NULL,
+  ...
 )
 }
 \arguments{
 \item{model}{Object of type `mHMMbayes::mHMM`,
 created using [mHMMbayes::mHMM()].}
+
+\item{data_distr}{String specifying the data type to plot. Takes 'categorical' or 'continuous.}
 
 \item{type}{String specifying the type of plot to return.
 Takes "bar", "point", and "boxplot".}
@@ -56,6 +59,8 @@ posterior densities.}
 the amount of jitter.}
 
 \item{burn_in}{Optional integer specifying the number of burnin iterations.}
+
+\item{...}{Currently not in use.}
 }
 \value{
 Object of type `ggplot2::gg` plotting emission distributions.

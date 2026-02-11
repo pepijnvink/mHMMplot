@@ -106,7 +106,6 @@ plot_emiss <- function(model, ...) {
 plot_emiss.cont <- function(model,
                        type = "bar",
                        subject_effects = TRUE,
-                       cat_labels = NULL,
                        line = FALSE,
                        subject = NULL,
                        facet = 'state',
@@ -172,28 +171,28 @@ plot_emiss.cont <- function(model,
   if (type == "bar" | type == "point") {
       emiss_group_melt <- tidy_mHMM(model, param = 'emiss', burn_in = burn_in)
       emiss_group_mu <- emiss_group_melt %>%
-        dplyr::filter(param == 'mu')
+        dplyr::filter(.data$param == 'mu')
       if (!is.null(errorbar)) {
         if (errorbar == "sd") {
           emiss_group_sdmu <- emiss_group_melt %>%
-            dplyr::filter(param == 'sdmu') %>%
-            dplyr::pull(median)
+            dplyr::filter(.data$param == 'sdmu') %>%
+            dplyr::pull(.data$median)
           emiss_group_mu <- emiss_group_mu %>%
-            dplyr::select(vrb, state, median) %>%
-            dplyr::rename(mean = median) %>%
-            dplyr::mutate(lower = mean - emiss_group_sdmu,
-            upper = mean + emiss_group_sdmu)
+            dplyr::select(.data$vrb, .data$state, .data$median) %>%
+            dplyr::rename(mean = .data$median) %>%
+            dplyr::mutate(lower = .data$mean - emiss_group_sdmu,
+            upper = .data$mean + emiss_group_sdmu)
           note_errorbar <- "Errorbars represent the between-person standard deviation"
         } else if(errorbar == 'ci'){
           emiss_group_mu <- emiss_group_mu %>%
-            dplyr::select(-c(param, level, mean)) %>%
+            dplyr::select(-c(.data$param, .data$level, .data$mean)) %>%
             dplyr::rename_with(~c('vrb', 'state', 'mean', 'lower', 'upper'))
           note_errorbar <- paste0("Errorbars represent the ", errorbar_prob*100,"% credible interval")
         }
       } else {
         emiss_group_mu <- emiss_group_mu %>%
-          dplyr::select(vrb, state, median) %>%
-          dplyr::rename(mean = median)
+          dplyr::select(.data$vrb, .data$state, .data$median) %>%
+          dplyr::rename(mean = .data$median)
       }
     if (type == "bar") {
       if(facet == 'state'){
@@ -527,7 +526,7 @@ plot_emiss.cat <- function(model,
   if (type == "bar" | type == "point") {
       emiss_group_melt <- tidy_mHMM(model, param = 'emiss', burn_in = burn_in)
       emiss_group_mu <- emiss_group_melt %>%
-        dplyr::filter(param == 'emiss_prob')
+        dplyr::filter(.data$param == 'emiss_prob')
       if (!is.null(errorbar)) {
         if (errorbar == "sd") {
           cli::cli_abort(c("You specified `errorbar = 'sd'`.",
@@ -536,14 +535,14 @@ plot_emiss.cat <- function(model,
                            ))
         } else if(errorbar == 'ci'){
           emiss_group_mu <- emiss_group_mu %>%
-            dplyr::select(-c(param, level, mean)) %>%
+            dplyr::select(-c(.data$param, .data$level, .data$mean)) %>%
             dplyr::rename_with(~c('vrb', 'category', 'state', 'mean', 'lower', 'upper'))
           note_errorbar <- paste0("Errorbars represent the ", errorbar_prob*100,"% credible interval")
         }
       } else {
         emiss_group_mu <- emiss_group_mu %>%
-          dplyr::select(category, state, median) %>%
-          dplyr::rename(mean = median)
+          dplyr::select(.data$category, .data$state, .data$median) %>%
+          dplyr::rename(mean = .data$median)
       }
     if (type == "bar") {
       if(facet == 'state'){
@@ -717,6 +716,7 @@ plot_emiss.cat <- function(model,
 #'
 #' @param model Object of type `mHMMbayes::mHMM`,
 #' created using [mHMMbayes::mHMM()].
+#' @param data_distr String specifying the data type to plot. Takes 'categorical' or 'continuous.
 #' @param type String specifying the type of plot to return.
 #' Takes "bar", "point", and "boxplot".
 #' @param subject_effects Logical specifying whether a layer of individual
@@ -737,6 +737,7 @@ plot_emiss.cat <- function(model,
 #' @param jitter Object created with ggplot2::position_jitter indicating
 #' the amount of jitter.
 #' @param burn_in Optional integer specifying the number of burnin iterations.
+#' @param ... Currently not in use.
 #'
 #' @return
 #' Object of type `ggplot2::gg` plotting emission distributions.
@@ -820,9 +821,9 @@ plot_emiss.mHMM_vary <- function(model,
                        alpha = 0.3,
                        jitter = ggplot2::position_jitter(
                          width = 0.2,
-                         height = 0
-                       ),
-                       burn_in = NULL) {
+                         height = 0),
+                       burn_in = NULL,
+  ...) {
   if(data_distr == 'continuous'){
     class(model) <- c('mHMM', 'cont')
     model$input$n_dep <- sum(model$input$data_distr == 'continuous')

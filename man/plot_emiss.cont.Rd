@@ -8,7 +8,6 @@
   model,
   type = "bar",
   subject_effects = TRUE,
-  cat_labels = NULL,
   line = FALSE,
   subject = NULL,
   facet = "state",
