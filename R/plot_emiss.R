@@ -527,7 +527,7 @@ plot_emiss.cat <- function(model,
   if (type == "bar" | type == "point") {
       emiss_group_melt <- tidy_mHMM(model, param = 'emiss', burn_in = burn_in)
       emiss_group_mu <- emiss_group_melt %>%
-        dplyr::filter(param == 'mu')
+        dplyr::filter(param == 'emiss_prob')
       if (!is.null(errorbar)) {
         if (errorbar == "sd") {
           emiss_group_sdmu <- emiss_group_melt %>%
@@ -542,12 +542,12 @@ plot_emiss.cat <- function(model,
         } else if(errorbar == 'ci'){
           emiss_group_mu <- emiss_group_mu %>%
             dplyr::select(-c(param, level, mean)) %>%
-            dplyr::rename_with(~c('vrb', 'state', 'mean', 'lower', 'upper'))
+            dplyr::rename_with(~c('vrb', 'category', 'state', 'mean', 'lower', 'upper'))
           note_errorbar <- paste0("Errorbars represent the ", errorbar_prob*100,"% credible interval")
         }
       } else {
         emiss_group_mu <- emiss_group_mu %>%
-          dplyr::select(vrb, state, median) %>%
+          dplyr::select(category, state, median) %>%
           dplyr::rename(mean = median)
       }
     if (type == "bar") {
@@ -555,18 +555,18 @@ plot_emiss.cat <- function(model,
         gg <- ggplot2::ggplot(
           data = emiss_group_mu,
           mapping = ggplot2::aes(
-            x = .data$vrb,
+            x = .data$category,
             y = .data$mean,
-            fill = .data$vrb
+            fill = .data$category
           )
         )
-      } else if(facet == 'vrb'){
+      } else if(facet == 'category'){
         gg <- ggplot2::ggplot(
           data = emiss_group_mu,
           mapping = ggplot2::aes(
             x = .data$state,
             y = .data$mean,
-            fill = .data$vrb
+            fill = .data$category
           )
         )
       }
@@ -575,11 +575,11 @@ plot_emiss.cat <- function(model,
         gg <- ggplot2::ggplot(
           data = emiss_group_mu,
           mapping = ggplot2::aes(
-            x = .data$vrb,
+            x = .data$category,
             y = .data$mean
           )
         )
-      } else if(facet == 'vrb'){
+      } else if(facet == 'category'){
         gg <- ggplot2::ggplot(
           data = emiss_group_mu,
           mapping = ggplot2::aes(
@@ -600,9 +600,9 @@ plot_emiss.cat <- function(model,
           ggplot2::geom_jitter(
             data = gg_emiss_subject,
             mapping = ggplot2::aes(
-              x = .data$vrb,
+              x = .data$category,
               y = .data$mean,
-              fill = .data$vrb
+              fill = .data$category
             ),
             alpha = alpha,
             color = "black",
@@ -615,7 +615,7 @@ plot_emiss.cat <- function(model,
             ggplot2::geom_line(
               data = gg_emiss_subject,
               mapping = ggplot2::aes(
-                x = .data$vrb,
+                x = .data$category,
                 y = .data$mean,
                 group = .data$subject
               ),
@@ -623,14 +623,14 @@ plot_emiss.cat <- function(model,
               color = "grey"
             )
         }
-      } else if(facet == 'vrb'){
+      } else if(facet == 'category'){
         gg <- gg +
           ggplot2::geom_jitter(
             data = gg_emiss_subject,
             mapping = ggplot2::aes(
               x = .data$state,
               y = .data$mean,
-              fill = .data$vrb
+              fill = .data$category
             ),
             alpha = alpha,
             color = "black",
@@ -662,11 +662,11 @@ plot_emiss.cat <- function(model,
           lineend = "round"
         ) +
         ggplot2::geom_segment(
-          ggplot2::aes(y = .data$lower, yend = .data$upper, color = .data$vrb),
+          ggplot2::aes(y = .data$lower, yend = .data$upper, color = .data$category),
           linewidth = 1.5,
           lineend = "round"
         ) +
-        ggplot2::geom_point(size = 3, aes(color = .data$vrb)) +
+        ggplot2::geom_point(size = 3, aes(color = .data$category)) +
         ggplot2::labs(caption = note_errorbar)
     }
   } else if (type == "boxplot") {
@@ -706,7 +706,7 @@ plot_emiss.cat <- function(model,
       ggplot2::facet_grid(cols = ggplot2::vars(.data$state))
   } else {
     gg <- gg +
-      ggplot2::facet_grid(cols = ggplot2::vars(.data$vrb))
+      ggplot2::facet_grid(cols = ggplot2::vars(.data$category))
   }
   gg <- gg +
     ggplot2::theme(legend.position = "none") +
@@ -828,8 +828,29 @@ plot_emiss.mHMM_vary <- function(model,
                          height = 0
                        ),
                        burn_in = NULL) {
-  model$input$data_distr <- data_distr
-  plot_emiss(model = model,
+  if(data_distr == 'continuous'){
+    class(model) <- c('mHMM', 'cont')
+    model$input$n_dep <- sum(model$input$data_distr == 'continuous')
+    model$input$dep_labels <- model$input$dep_labels[model$input$data_distr == 'continuous']
+    model$input$data_distr <- 'continuous'
+    plot_emiss(model = model,
+                       type = type,
+                       subject_effects = subject_effects,
+                       line = line,
+                       subject = subject,
+                       facet = facet,
+                       errorbar = errorbar,
+                       errorbar_prob = errorbar_prob,
+                       alpha = alpha,
+                       jitter = jitter,
+                       burn_in = burn_in)
+  } else if(data_distr == 'categorical'){
+    class(model) <- c('mHMM', 'cat')
+    model$input$n_dep <- sum(model$input$data_distr == 'categorical')
+    model$input$dep_labels <- model$input$dep_labels[model$input$data_distr == 'categorical']
+    model$input$q_emiss <- model$input$q_emiss[model$input$data_distr == 'categorical']
+    model$input$data_distr <- 'categorical'
+    plot_emiss(model = model,
                        type = type,
                        subject_effects = subject_effects,
                        cat_labels = cat_labels,
@@ -842,4 +863,5 @@ plot_emiss.mHMM_vary <- function(model,
                        alpha = alpha,
                        jitter = jitter,
                        burn_in = burn_in)
+  }
 }

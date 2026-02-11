@@ -536,12 +536,6 @@ tidy_mHMM.cat <- function(
           quantiles
         ) %>%
           t()
-        ci_emiss <- lapply(model$emiss_int_bar, function(x) {
-        apply(x[(burn_in + 1):J, ], 2, stats::quantile, quantiles) %>%
-          t() %>%
-          tibble::as_tibble()
-      }) %>%
-        dplyr::bind_rows()
         all_emiss[[i]] <- tibble::tibble(
           param = 'emiss_prob',
           vrb = factor(rep(vrbs, times = q_emiss * m), levels = vrbs),
@@ -610,4 +604,142 @@ tidy_mHMM.cat <- function(
     }
   }
   return(allpars)
+}
+
+#' Tidy a mHMM object with varying emission distributions
+#'
+#' @param model The model of class `mHMM`, fit using [mHMMbayes::mHMM()]
+#' @param param String, specifying the parameters to obtain a tidy summary for. Takes 'gamma' or 'emiss'
+#' @param data_distr String specifying whether 'continuous' or 'categorical' variables should be returned.
+#' @param level String specifying the level to obtain a tidy summary for. Takes 'group' or 'subject'
+#' @param prob If `TRUE`, returns parameters on the probability scale, if FALSE, returns parameters on the logit scale.
+#' @param quantiles Numeric vector specifying the quantiles to use to obtain credible intervals.
+#' @param subjects Optional numeric vector specifying the subjects to obtain a tidy summary for. Ignored when `level = 'group'`
+#' @param burn_in Optional integer values specifying the number of burnin samples to discard.
+#' @param ... Additional arguments to tidying method. Currently not used
+#'
+#' @returns A [tibble::tibble()] with summary for the model.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' library(mHMMbayes)
+#' # simulating multivariate continuous data
+#' n_t <- 100
+#' n <- 10
+#' m <- 3
+#' n_dep <- 2
+#'
+#' gamma <- matrix(c(
+#'   0.8, 0.1, 0.1,
+#'   0.2, 0.7, 0.1,
+#'   0.2, 0.2, 0.6
+#' ), ncol = m, byrow = TRUE)
+#'
+#' emiss_distr <- list(
+#'   matrix(c(
+#'     50, 10,
+#'     100, 10,
+#'     150, 10
+#'   ), nrow = m, byrow = TRUE),
+#'   matrix(c(
+#'     5, 2,
+#'     10, 5,
+#'     20, 3
+#'   ), nrow = m, byrow = TRUE)
+#' )
+#'
+#' data_cont <- sim_mHMM(
+#'   n_t = n_t, n = n, data_distr = "continuous",
+#'   gen = list(m = m, n_dep = n_dep),
+#'   gamma = gamma, emiss_distr = emiss_distr,
+#'   var_gamma = .1, var_emiss = c(5^2, 0.2^2)
+#' )
+#'
+#' # Specify hyper-prior for the continuous emission distribution
+#' manual_prior_emiss <- prior_emiss_cont(
+#'   gen = list(m = m, n_dep = n_dep),
+#'   emiss_mu0 = list(
+#'     matrix(c(30, 70, 170), nrow = 1),
+#'     matrix(c(7, 8, 18), nrow = 1)
+#'   ),
+#'   emiss_K0 = list(1, 1),
+#'   emiss_V = list(rep(5^2, m), rep(0.5^2, m)),
+#'   emiss_nu = list(1, 1),
+#'   emiss_a0 = list(rep(1.5, m), rep(1, m)),
+#'   emiss_b0 = list(rep(20, m), rep(4, m))
+#' )
+#'
+#' # Run the model on the simulated data:
+#' # Note that for reasons of running time, J is set at a ridiculous low value.
+#' # One would typically use a number of iterations J of at least 1000,
+#' # and a burn_in of 200.
+#' out_3st_cont_sim <- mHMM(
+#'   s_data = data_cont$obs,
+#'   data_distr = "continuous",
+#'   gen = list(m = m, n_dep = n_dep),
+#'   start_val = c(list(gamma), emiss_distr),
+#'   emiss_hyp_prior = manual_prior_emiss,
+#'   mcmc = list(J = 11, burn_in = 5)
+#' )
+#'
+#' tidy_mHMM(out_3st_cont_sim)
+#' }
+tidy_mHMM.mHMM_vary <- function(
+  model,
+  param = 'gamma',
+  data_distr = 'categorical',
+  level = "group",
+  prob = TRUE,
+  quantiles = c(0.025, 0.975),
+  subjects = NULL,
+  burn_in = NULL,
+  ...
+){
+  if(param == 'gamma'){
+    class(model) <- c('cat', 'mHMM', 'list')
+    model$input$n_dep <- sum(model$input$data_distr == 'continuous')
+    model$input$dep_labels <- model$input$dep_labels[model$input$data_distr == 'continuous']
+    model$input$data_distr <- 'continuous'
+    tidy_mHMM(
+      model = model,
+      param = 'gamma',
+      level = level,
+      prob = prob,
+      quantiles = quantiles,
+      subjects = subjects,
+      burn_in = burn_in
+    )
+  } else if(param == 'emiss'){
+    if(data_distr == 'continuous'){
+      class(model) <- c('cont', 'mHMM', 'list')
+    model$input$n_dep <- sum(model$input$data_distr == 'continuous')
+    model$input$dep_labels <- model$input$dep_labels[model$input$data_distr == 'continuous']
+    model$input$data_distr <- 'continuous'
+    tidy_mHMM(
+      model = model,
+      param = 'emiss',
+      level = level,
+      prob = prob,
+      quantiles = quantiles,
+      subjects = subjects,
+      burn_in = burn_in
+    )
+    } else if(data_distr == 'categorical'){
+      class(model) <- c('cat', 'mHMM', 'list')
+    model$input$n_dep <- sum(model$input$data_distr == 'categorical')
+    model$input$dep_labels <- model$input$dep_labels[model$input$data_distr == 'categorical']
+    model$input$q_emiss <- model$input$q_emiss[model$input$data_distr == 'categorical']
+    model$input$data_distr <- 'categorical'
+    tidy_mHMM(
+      model = model,
+      param = 'emiss',
+      level = level,
+      prob = prob,
+      quantiles = quantiles,
+      subjects = subjects,
+      burn_in = burn_in
+    )
+    }
+  }
 }
