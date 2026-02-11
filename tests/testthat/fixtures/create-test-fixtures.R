@@ -5,30 +5,58 @@ n <- 10
 m <- 3
 n_dep <- 2
 
-gamma <- matrix(c(
-  0.8, 0.1, 0.1,
-  0.2, 0.7, 0.1,
-  0.2, 0.2, 0.6
-), ncol = m, byrow = TRUE)
+gamma <- matrix(
+  c(
+    0.8,
+    0.1,
+    0.1,
+    0.2,
+    0.7,
+    0.1,
+    0.2,
+    0.2,
+    0.6
+  ),
+  ncol = m,
+  byrow = TRUE
+)
 
 emiss_distr <- list(
-  matrix(c(
-    50, 10,
-    100, 10,
-    150, 10
-  ), nrow = m, byrow = TRUE),
-  matrix(c(
-    5, 2,
-    10, 5,
-    20, 3
-  ), nrow = m, byrow = TRUE)
+  matrix(
+    c(
+      50,
+      10,
+      100,
+      10,
+      150,
+      10
+    ),
+    nrow = m,
+    byrow = TRUE
+  ),
+  matrix(
+    c(
+      5,
+      2,
+      10,
+      5,
+      20,
+      3
+    ),
+    nrow = m,
+    byrow = TRUE
+  )
 )
 set.seed(42)
 data_cont <- sim_mHMM(
-  n_t = n_t, n = n, data_distr = "continuous",
+  n_t = n_t,
+  n = n,
+  data_distr = "continuous",
   gen = list(m = m, n_dep = n_dep),
-  gamma = gamma, emiss_distr = emiss_distr,
-  var_gamma = .1, var_emiss = c(5^2, 0.2^2)
+  gamma = gamma,
+  emiss_distr = emiss_distr,
+  var_gamma = .1,
+  var_emiss = c(5^2, 0.2^2)
 )
 
 # Specify hyper-prior for the continuous emission distribution
@@ -72,34 +100,50 @@ start_TM[lower.tri(start_TM) | upper.tri(start_TM)] <- .2
 start_EM <- list(
   matrix(
     c(
-      0.05, 0.90, 0.05,
-      0.90, 0.05, 0.05
+      0.05,
+      0.90,
+      0.05,
+      0.90,
+      0.05,
+      0.05
     ),
     byrow = TRUE,
-    nrow = m, ncol = q_emiss[1]
+    nrow = m,
+    ncol = q_emiss[1]
   ), # vocalizing patient
   matrix(
     c(
-      0.1, 0.9,
-      0.1, 0.9
+      0.1,
+      0.9,
+      0.1,
+      0.9
     ),
-    byrow = TRUE, nrow = m,
+    byrow = TRUE,
+    nrow = m,
     ncol = q_emiss[2]
   ), # looking patient
   matrix(
     c(
-      0.90, 0.05, 0.05,
-      0.05, 0.90, 0.05
+      0.90,
+      0.05,
+      0.05,
+      0.05,
+      0.90,
+      0.05
     ),
     byrow = TRUE,
-    nrow = m, ncol = q_emiss[3]
+    nrow = m,
+    ncol = q_emiss[3]
   ), # vocalizing therapist
   matrix(
     c(
-      0.1, 0.9,
-      0.1, 0.9
+      0.1,
+      0.9,
+      0.1,
+      0.9
     ),
-    byrow = TRUE, nrow = m,
+    byrow = TRUE,
+    nrow = m,
     ncol = q_emiss[4]
   )
 ) # looking therapist

@@ -99,16 +99,18 @@
 #'   prob = TRUE
 #' )
 #' }
-plot_trace <- function(model,
-                       component = "gamma",
-                       param = NULL,
-                       level = "group",
-                       vrb = NULL,
-                       prob = TRUE,
-                       subject = NULL,
-                       state_labels = NULL,
-                       cat_labels = NULL,
-                       alpha = 1) {
+plot_trace <- function(
+  model,
+  component = "gamma",
+  param = NULL,
+  level = "group",
+  vrb = NULL,
+  prob = TRUE,
+  subject = NULL,
+  state_labels = NULL,
+  cat_labels = NULL,
+  alpha = 1
+) {
   if (inherits(model, "mHMM")) {
     model_1 <- model
     model <- list(model)
@@ -143,8 +145,10 @@ plot_trace <- function(model,
   }
   if (component %nin% c("gamma", "emiss")) {
     comp <- cli::cli_vec(c("gamma", "emiss"), style = list("vec-sep2" = " or "))
-    cli::cli_abort("Must provide {.val {comp}} to {.var component}
-                   to specify the component to plot.")
+    cli::cli_abort(
+      "Must provide {.val {comp}} to {.var component}
+                   to specify the component to plot."
+    )
   }
   if (level %nin% c("group", "subject")) {
     cli::cli_abort(
@@ -221,7 +225,8 @@ plot_trace <- function(model,
       if (param %in% allowed[[data_distr]]) {
         param_comb <- paste0(component, "_", param)
       } else {
-        allowed_vec <- cli::cli_vec(allowed[[data_distr]],
+        allowed_vec <- cli::cli_vec(
+          allowed[[data_distr]],
           style = list(
             "vec-last" = ", or ",
             "vec-sep2" = " or "
@@ -310,12 +315,15 @@ plot_trace <- function(model,
     )[[level]]
   }
   param_name <- allparams[param_comb]
-  if (param_name %in% c(
-    "trans_prob",
-    "cat_emiss",
-    "cont_emiss",
-    "count_emiss"
-  )) {
+  if (
+    param_name %in%
+      c(
+        "trans_prob",
+        "cat_emiss",
+        "cont_emiss",
+        "count_emiss"
+      )
+  ) {
     obj <- lapply(model, function(x) {
       x[["PD_subj"]][[subject]][[param_name]] %>%
         tibble::as_tibble(.name_repair = "minimal")
@@ -324,10 +332,12 @@ plot_trace <- function(model,
       obj <- obj %>%
         lapply(function(x) {
           x %>%
-            dplyr::select(tidyselect::starts_with(
-              paste0("dep", vrb_ind, "_")
-            ) &
-              !tidyselect::ends_with(c("fixvar", "sd")))
+            dplyr::select(
+              tidyselect::starts_with(
+                paste0("dep", vrb_ind, "_")
+              ) &
+                !tidyselect::ends_with(c("fixvar", "sd"))
+            )
         })
     } else {
       for (i in 1:n_chains) {
@@ -339,14 +349,17 @@ plot_trace <- function(model,
       x[[param_name]][[subject]][[vrb]] %>%
         tibble::as_tibble(.name_repair = "minimal")
     })
-  } else if (param_name %in% c(
-    "gamma_int_bar",
-    "gamma_cov_bar",
-    "gamma_V_int_bar",
-    "gamma_prob_bar",
-    "emiss_cont_cov_bar",
-    "emiss_cat_cov_bar"
-  )) {
+  } else if (
+    param_name %in%
+      c(
+        "gamma_int_bar",
+        "gamma_cov_bar",
+        "gamma_V_int_bar",
+        "gamma_prob_bar",
+        "emiss_cont_cov_bar",
+        "emiss_cat_cov_bar"
+      )
+  ) {
     obj <- lapply(model, function(x) {
       x[[param_name]] %>%
         tibble::as_tibble(.name_repair = "minimal")
@@ -369,9 +382,9 @@ plot_trace <- function(model,
   }
   obj <- obj %>%
     dplyr::bind_rows(.id = "chain") %>%
-    dplyr::mutate(chain = factor(.data$chain,
-      labels = paste("Chain", 1:n_chains)
-    ))
+    dplyr::mutate(
+      chain = factor(.data$chain, labels = paste("Chain", 1:n_chains))
+    )
   clnm <- list(
     "emiss_int_bar" = c("Category", "State"),
     "emiss_prob_bar" = c("Category", "State"),
@@ -486,35 +499,43 @@ plot_trace <- function(model,
       )
       n_levels_cat <- model_1$input$q_emiss[vrb_ind]
       obj <- obj %>%
-        dplyr::mutate(Category = factor(
-          .data$Category,
-          levels = 1:n_levels_cat,
-          labels = paste("Category", 1:n_levels_cat)
-        ))
+        dplyr::mutate(
+          Category = factor(
+            .data$Category,
+            levels = 1:n_levels_cat,
+            labels = paste("Category", 1:n_levels_cat)
+          )
+        )
     } else {
       obj <- obj %>%
-        dplyr::mutate(Category = factor(
-          .data$Category,
-          levels = 1:n_levels_cat,
-          labels = cat_labels
-        ))
+        dplyr::mutate(
+          Category = factor(
+            .data$Category,
+            levels = 1:n_levels_cat,
+            labels = cat_labels
+          )
+        )
     }
   } else if ("Category" %in% colnames(obj)) {
     n_levels_cat <- model_1$input$q_emiss[vrb_ind]
     obj <- obj %>%
-      dplyr::mutate(Category = factor(
-        .data$Category,
-        levels = 1:n_levels_cat,
-        labels = paste("Category", 1:n_levels_cat)
-      ))
+      dplyr::mutate(
+        Category = factor(
+          .data$Category,
+          levels = 1:n_levels_cat,
+          labels = paste("Category", 1:n_levels_cat)
+        )
+      )
   }
   if (n_chains > 1) {
     gg <- obj %>%
-      ggplot2::ggplot(mapping = ggplot2::aes(
-        x = .data$iter,
-        y = .data$value,
-        color = .data$chain
-      ))
+      ggplot2::ggplot(
+        mapping = ggplot2::aes(
+          x = .data$iter,
+          y = .data$value,
+          color = .data$chain
+        )
+      )
   } else {
     gg <- obj %>%
       ggplot2::ggplot(mapping = ggplot2::aes(x = .data$iter, y = .data$value))
@@ -529,9 +550,11 @@ plot_trace <- function(model,
       )
   } else {
     gg <- gg +
-      ggplot2::facet_grid(rows = ggplot2::vars(
-        !!rlang::sym(clnm[[param_name]])
-      ))
+      ggplot2::facet_grid(
+        rows = ggplot2::vars(
+          !!rlang::sym(clnm[[param_name]])
+        )
+      )
   }
   gg <- gg +
     theme_mhmm() +
