@@ -8,9 +8,12 @@
   model,
   param = "gamma",
   level = "group",
+  prob = TRUE,
+  ci = TRUE,
+  ess = TRUE,
+  quantiles = c(0.025, 0.975),
   subjects = NULL,
   burn_in = NULL,
-  quantiles = c(0.025, 0.975),
   ...
 )
 }
@@ -21,11 +24,17 @@
 
 \item{level}{String specifying the level to obtain a tidy summary for. Takes 'group' or 'subject'}
 
-\item{subjects}{Optional numeric vector specifying the subjects to obtain a tidy summary for. Ignored when `level = 'group'`}
+\item{prob}{If `TRUE`, returns parameters on the probability scale, if FALSE, returns parameters on the logit scale. Only used if `param = 'gamma'`}
 
-\item{burn_in}{Optional integer values specifying the number of burnin samples to discard.}
+\item{ci}{Logical indicating whether credible intervals should be computed.}
+
+\item{ess}{Logical indicating whether effective sample size should be computed.}
 
 \item{quantiles}{Numeric vector specifying the quantiles to use to obtain credible intervals.}
+
+\item{subjects}{Optional numeric vector specifying the subjects to obtain a tidy summary for. Ignored when `level = 'group'`.}
+
+\item{burn_in}{Optional integer values specifying the number of burnin samples to discard.}
 
 \item{...}{Additional arguments to tidying method. Currently not used}
 }

@@ -16,6 +16,7 @@ Imports:
     ggplot2,
     magrittr,
     mHMMbayes,
+    posterior,
     rlang,
     stats,
     tibble,

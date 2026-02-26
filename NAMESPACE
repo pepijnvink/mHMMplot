@@ -2,6 +2,7 @@
 
 S3method(tidy_mHMM,cat)
 S3method(tidy_mHMM,cont)
+S3method(tidy_mHMM,mHMM_vary)
 export("%>%")
 export(plot_emiss)
 export(plot_gamma)
