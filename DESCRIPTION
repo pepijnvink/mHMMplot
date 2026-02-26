@@ -19,7 +19,8 @@ Imports:
     stats,
     tibble,
     tidyr,
-    tidyselect
+    tidyselect,
+    vctrs
 Suggests: 
     knitr,
     rmarkdown,
