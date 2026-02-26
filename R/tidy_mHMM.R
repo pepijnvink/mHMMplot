@@ -485,7 +485,7 @@ tidy_mHMM.cont <- function(
           apply(2, mean)
         all_emiss_i <- data.frame(
           param = 'mu',
-          vrb = factor(rep(vrbs, each = m)),
+          vrb = factor(rep(vrbs, each = m), levels = vrbs),
           state = factor(paste('state', rep(1:m, times = n_dep))),
           level = 'subject',
           subject = factor(paste('subject', i))
@@ -665,7 +665,7 @@ tidy_mHMM.cat <- function(
       }) %>%
         dplyr::bind_rows() %>%
         dplyr::rename(median = 'value')
-      mean_emiss <- lapply(model$emiss_int_bar, function(x) {
+        mean_emiss <- lapply(model$emiss_int_bar, function(x) {
         apply(x[(burn_in + 1):J, ], 2, mean) %>%
           matrix(byrow = TRUE, nrow = m) %>%
           mHMMbayes::int_to_prob() %>%
