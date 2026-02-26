@@ -1,31 +1,34 @@
-#' Plot trace plots to assess convergence
+#' Create trace plots of an mHMM object
+#'
+#'
+#' @param model An object to obtain trace plots for.
+#' @param ... Additional arguments to method
+#'
+#' @returns A trace plot of type [[ggplot2::ggplot]].
+#'
+#' @export
+#'
+plot_trace <- function(model, ...) {
+  UseMethod('plot_trace')
+}
+
+#' Plot trace plots to assess convergence for continuous data
 #' of a Bayesian Multilevel Hidden Markov Model
 #'
 #' @param model Object or a list of objects of type `mHMMbayes::mHMM`
 #' created using [mHMMbayes::mHMM()].
 #' @param component Character string specifying the component to plot.
 #' Takes "gamma" or "emiss".
-#' @param param Optional character string specifying the parameter to plot
-#' for the plotted component.
-#' If `NULL` (default), plots the means (or probabilities).
-#' Takes "var" for between-person variances,
+#' @param param Character string specifying the parameter to plot
+#' for the plotted component. For emission distribution, takes 'mu' to the means (or probabilities), "varmu" for between-person variances,
 #' "sd" for standard deviations of normal emission distributions,
-#' and "beta" for regression coefficients.
+#' and "cov" for regression coefficients of covariates. For transition probabilities, takes 'int', 'prob', or 'varint'.
 #' @param level Character string specifying the level of parameter to plot.
 #' Takes "group" or "subject".
-#' @param vrb Optional character string specifying the variable to plot
-#' when plotting categorical emission distributions.
-#' @param prob Logical specifying whether trace plots of transitions
-#' or categorical emissions should be plotted on the probability scale,
-#' rather than the log scale.
+#' @param vrb Character string specifying the variable to plot.
 #' @param subject Integer specifying the subject to plot
 #' subject specific parameters for.
-#' @param state_labels Optional character string specifying
-#' labels to use for the states.
-#' @param cat_labels Optional character string used to specify labels
-#' for categories when plotting emission distributions of categorical variables.
-#' @param alpha Numeric value specifying the transparency
-#' of the lines in the plot. Default is 1.
+#' @param ... Currently not in use.
 #'
 #' @return Object of type `ggplot2::gg`, plotting parameter distributions.
 #' @export
@@ -99,40 +102,15 @@
 #'   prob = TRUE
 #' )
 #' }
-plot_trace <- function(
+plot_trace.cont <- function(
   model,
   component = "gamma",
   param = NULL,
   level = "group",
   vrb = NULL,
-  prob = TRUE,
   subject = NULL,
-  state_labels = NULL,
-  cat_labels = NULL,
-  alpha = 1
+  ...
 ) {
-  if (inherits(model, "mHMM")) {
-    model_1 <- model
-    model <- list(model)
-  }
-  lapply(model, function(x) {
-    check_model(x, classes = "mHMM", fns = "mHMM")
-  })
-  n_chains <- length(model)
-  if (n_chains > 1) {
-    list_input <- lapply(model, function(x) x$input)
-    all_identical <- length(unique(list_input)) == 1
-    if (!all_identical) {
-      cli::cli_abort(
-        c(
-          "x" = "Not all models you provided are identical",
-          "!" = "Please provide new models"
-        )
-      )
-    } else {
-      model_1 <- model[[1]]
-    }
-  }
   if (is.null(level)) {
     cli::cli_abort(
       c(
@@ -149,6 +127,266 @@ plot_trace <- function(
       "Must provide {.val {comp}} to {.var component}
                    to specify the component to plot."
     )
+  }
+  if (level %nin% c("group", "subject")) {
+    cli::cli_abort(
+      "x" = "{.val {level}} is not a valid input
+                   for {.var level}.",
+      "i" = "Valid inputs are {.val group} or {.val subject}."
+    )
+  }
+  if(param == 'emiss' & level == 'subject'){
+    param <- 'mu'
+  }
+  if (is.null(subject) && level == "subject") {
+    cli::cli_abort(
+      c(
+        "{.code plot_convergence} needs an indicator specifying
+        the subject to plot when plotting subject-specific parameters.",
+        "i" = "Please provide a subject indicator using the {.var subject}
+        argument, or specify {.code level = {.val group}}."
+      )
+    )
+  }
+  if (!is.null(vrb) && component == "gamma") {
+    cli::cli_warn(
+      c(
+        "x" = "You provided a variable to plot using {.var vrb}
+        while plotting transition probabilities",
+        "i" = "The variable name you provided will be ignored."
+      )
+    )
+  }
+  m <- model$input$m
+  if(is.null(vrb)){
+    vrb <- model$input$dep_labels
+  }
+  if (!is.null(subject) && level == "group") {
+    cli::cli_warn(
+      c(
+        "You provided a subject indicator while plotting
+        group-level distributions.",
+        "i" = "The subject indicator you provided will be ignored."
+      )
+    )
+  }
+  if (component == "emiss") {
+    vrb_ind <- which(vrb %in% model$input$dep_labels)
+    if (is.null(param)) {
+      param <- "mu"
+    } else if (level == "group") {
+      allowed <- c("mu", "varmu", "cov", "sd")
+      if (param %nin% allowed) {
+        allowed_vec <- cli::cli_vec(
+          allowed,
+          style = list(
+            "vec-last" = ", or ",
+            "vec-sep2" = " or "
+          )
+        )
+        cli::cli_abort(
+          c(
+            "x" = "{.val {param}} is not a valid value
+            for {.var param} for your type of data.",
+            "i" = "You want to plot a {data_distr}
+            variable at the group level.",
+            "i" = "Allowed values for {.var param} are:
+            {.val {allowed_vec}} (or NULL)."
+          )
+        )
+      }
+    } else {
+      cli::cli_warn(
+        c(
+          "The function does not take a parameter specification
+          when plotting subject specific distributions.",
+          "i" = "Your input for {.var param} will be ignored."
+        )
+      )
+      param <- "mu"
+    }
+    if(level == 'group'){
+      param_comb <- paste0('emiss_', param, '_bar')
+      output <- model[[param_comb]][vrb] %>%
+        lapply(tibble::as_tibble)
+      output <- do.call(cbind, output) %>%
+        dplyr::rename_with(~paste0(rep(vrb, each = m), '_', param, '_state_', 1:m))
+    } else {
+      ncont <- length(model$input$dep_labels)
+      model$PD_subj[[subject]]$cont_emiss <- model$PD_subj[[subject]]$cont_emiss[, 1:(m*ncont)]
+      colnames(model$PD_subj[[subject]]$cont_emiss) <- paste0(rep(model$input$dep_labels, each = m), '_mu_state_', 1:m)
+      output <- model$PD_subj[[subject]]$cont_emiss %>%
+        tibble::as_tibble() %>%
+        dplyr::select(tidyselect::starts_with(vrb))
+    }
+    output_long <- output %>%
+      dplyr::mutate(iter = 1:dplyr::n()) %>%
+      tidyr::pivot_longer(-'iter', values_to = 'value', names_to = c('vrb', 'state'), names_pattern = paste0('(\\w+)_', param, '_state_(\\d+)')) %>%
+      dplyr::mutate(state = factor(.data$state, levels = 1:m, labels = paste('state', 1:m)),
+    vrb = factor(.data$vrb))
+    gg <- output_long %>%
+      ggplot2::ggplot(ggplot2::aes(
+        x = .data$iter,
+        y = .data$value
+      )) +
+      ggplot2::geom_line() +
+      ggplot2::facet_grid(
+        rows = ggplot2::vars(.data$state),
+        cols = ggplot2::vars(.data$vrb)
+      )
+  } else {
+    if(level == 'group'){
+      subject <- NULL
+    }
+    allowed <- c("int", "varint", "prob")
+      if (param %nin% allowed) {
+        allowed_vec <- cli::cli_vec(
+          allowed,
+          style = list(
+            "vec-last" = ", or ",
+            "vec-sep2" = " or "
+          )
+        )
+        cli::cli_abort(
+          c(
+            "x" = "{.val {param}} is not a valid value
+            for {.var param} for the desired component.",
+            "i" = "Allowed values for {.var param} are:
+            {.val {allowed_vec}}."
+          )
+        )
+      }
+    gg <- plot_trace_gamma(model, m, param = param, level, subject = subject)
+  }
+  return(gg)
+}
+
+#' Plot trace plots to assess convergence for categorical data
+#' of a Bayesian Multilevel Hidden Markov Model
+#'
+#' @param model Object or a list of objects of type `mHMMbayes::mHMM`
+#' created using [mHMMbayes::mHMM()].
+#' @param component Character string specifying the component to plot.
+#' Takes "gamma" or "emiss".
+#' @param param Optional character string specifying the parameter to plot
+#' for the plotted component. Takes 'int' or 'varint'.
+#' @param level Character string specifying the level of parameter to plot.
+#' Takes "group" or "subject".
+#' @param vrb Optional character string specifying the variable to plot
+#' when plotting categorical emission distributions.
+#' @param subject Integer specifying the subject to plot
+#' subject specific parameters for.
+#' @param ... Currently not in use.
+#'
+#' @return Object of type `ggplot2::gg`, plotting parameter distributions.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' library(mHMMbayes)
+#' # simulating multivariate continuous data
+#' n_t <- 100
+#' n <- 10
+#' m <- 3
+#' n_dep <- 2
+#'
+#' gamma <- matrix(c(
+#'   0.8, 0.1, 0.1,
+#'   0.2, 0.7, 0.1,
+#'   0.2, 0.2, 0.6
+#' ), ncol = m, byrow = TRUE)
+#'
+#' emiss_distr <- list(
+#'   matrix(c(
+#'     50, 10,
+#'     100, 10,
+#'     150, 10
+#'   ), nrow = m, byrow = TRUE),
+#'   matrix(c(
+#'     5, 2,
+#'     10, 5,
+#'     20, 3
+#'   ), nrow = m, byrow = TRUE)
+#' )
+#'
+#' data_cont <- sim_mHMM(
+#'   n_t = n_t, n = n, data_distr = "continuous",
+#'   gen = list(m = m, n_dep = n_dep),
+#'   gamma = gamma, emiss_distr = emiss_distr,
+#'   var_gamma = .1, var_emiss = c(5^2, 0.2^2)
+#' )
+#'
+#' # Specify hyper-prior for the continuous emission distribution
+#' manual_prior_emiss <- prior_emiss_cont(
+#'   gen = list(m = m, n_dep = n_dep),
+#'   emiss_mu0 = list(
+#'     matrix(c(30, 70, 170), nrow = 1),
+#'     matrix(c(7, 8, 18), nrow = 1)
+#'   ),
+#'   emiss_K0 = list(1, 1),
+#'   emiss_V = list(rep(5^2, m), rep(0.5^2, m)),
+#'   emiss_nu = list(1, 1),
+#'   emiss_a0 = list(rep(1.5, m), rep(1, m)),
+#'   emiss_b0 = list(rep(20, m), rep(4, m))
+#' )
+#'
+#' # Run the model on the simulated data:
+#' # Note that for reasons of running time, J is set at a ridiculous low value.
+#' # One would typically use a number of iterations J of at least 1000,
+#' # and a burn_in of 200.
+#' out_3st_cont_sim <- mHMM(
+#'   s_data = data_cont$obs,
+#'   data_distr = "continuous",
+#'   gen = list(m = m, n_dep = n_dep),
+#'   start_val = c(list(gamma), emiss_distr),
+#'   emiss_hyp_prior = manual_prior_emiss,
+#'   mcmc = list(J = 11, burn_in = 5)
+#' )
+#'
+#' plot_trace(
+#'   model = out_3st_cont_sim,
+#'   param = "gamma",
+#'   level = "group",
+#'   prob = TRUE
+#' )
+#' }
+plot_trace.cat <- function(
+  model,
+  component = "gamma",
+  param = 'int',
+  level = "group",
+  vrb = NULL,
+  subject = NULL,
+  ...
+)  {
+  if (is.null(level)) {
+    cli::cli_abort(
+      c(
+        "x" = "{.var level} specifying the level to plot
+        has not been specified.",
+        "!" = "Please specify 'group' to plot the group-level parameters,
+        or 'subject' to plot the subject level parameters."
+      )
+    )
+  }
+  if (component %nin% c("gamma", "emiss")) {
+    comp <- cli::cli_vec(c("gamma", "emiss"), style = list("vec-sep2" = " or "))
+    cli::cli_abort(
+      "Must provide {.val {comp}} to {.var component}
+                   to specify the component to plot."
+    )
+  }
+  if (param %nin% c("int", "prob", 'varint')) {
+    comp <- cli::cli_vec(c("int", "prob", 'varint'), style = list("vec-sep2" = " or ", 'vec-last' = ', or '))
+    cli::cli_abort(
+      "Must provide {.val {comp}} to {.var param}
+                   to specify the parameter to plot."
+    )
+  }
+  if(param == 'prob'){
+    prob = TRUE
+  } else {
+    prob = FALSE
   }
   if (level %nin% c("group", "subject")) {
     cli::cli_abort(
@@ -176,16 +414,27 @@ plot_trace <- function(
       )
     )
   }
-  if (!is.null(cat_labels) && component == "gamma") {
+  if (is.null(vrb) && component != "gamma") {
     cli::cli_warn(
       c(
-        "x" = "You provided category labels using {.var cat_labels}
-        while plotting transition probabilities",
-        "i" = "The category labels you provided will be ignored."
+        "x" = "You did not provide a variable to plot using {.var vrb}",
+        "i" = "Please provide a variable name."
       )
     )
   }
-  m <- model_1$input$m
+  m <- model$input$m
+  dep_labels <- model$input$dep_labels
+  if(is.null(vrb)){
+    vrb <- dep_labels[1]
+  } else {
+    if(vrb %nin% dep_labels){
+      comp <- cli::cli_vec(dep_labels, style = list("vec-sep2" = " and ", 'vec-last' = ', and '))
+      cli::cli_abort(c(
+        'x' = 'The variable name you provided for {.var vrb} was not used to build the model',
+        'i' = 'Valid values for {.var vrb} are {.val {comp}}'
+      ))
+    }
+  }
   vrb_ind <- NULL
   if (!is.null(subject) && level == "group") {
     cli::cli_warn(
@@ -196,368 +445,309 @@ plot_trace <- function(
       )
     )
   }
+
   if (component == "emiss") {
-    vrb <- check_vrb(model_1, vrb)
-    vrb_ind <- which(model_1$input$dep_labels == vrb)
-    if (inherits(model_1, "mHMM_vary")) {
-      data_distr <-
-        model_1$input$data_distr[which(model_1$input$dep_labels == vrb)]
-    } else {
-      data_distr <- model_1$input$data_distr
-    }
-    if (!is.null(cat_labels) && data_distr != "categorical") {
-      cli::cli_warn(
-        c(
-          "You provided category labels using {.var cat_labels}
-          while plotting a {data_distr} variable.",
-          "i" = "The category labels you provided will be ignored."
-        )
-      )
-    }
-    if (is.null(param)) {
-      param_comb <- component
-    } else if (level == "group") {
-      allowed <- list(
-        "categorical" = c("var", "beta"),
-        "continuous" = c("var", "beta", "sd"),
-        "count" = c("var", "beta")
-      )
-      if (param %in% allowed[[data_distr]]) {
-        param_comb <- paste0(component, "_", param)
+    vrb_ind <- which(model$input$dep_labels == vrb)
+    q_vrb <- model$input$q_emiss[vrb_ind]
+    if(level == 'group'){
+      if(prob){
+        output <- model$emiss_prob_bar[[vrb]] %>%
+          tibble::as_tibble()
+        output_long <- output %>%
+      dplyr::mutate(iter = 1:dplyr::n()) %>%
+      tidyr::pivot_longer(-'iter', values_to = 'value', names_to = c('category', 'state'), names_pattern = 'int_Emiss(\\d+)_S(\\d+)') %>%
+      dplyr::mutate(state = factor(.data$state, levels = 1:m, labels = paste('state', 1:m)),
+        category = factor(.data$category, levels = 1:q_vrb, labels = paste('category', 1:q_vrb)))
       } else {
-        allowed_vec <- cli::cli_vec(
-          allowed[[data_distr]],
-          style = list(
-            "vec-last" = ", or ",
-            "vec-sep2" = " or "
-          )
-        )
-        cli::cli_abort(
-          c(
-            "x" = "{.val {param}} is not a valid value
-            for {.var param} for your type of data.",
-            "i" = "You want to plot a {data_distr}
-            variable at the group level.",
-            "i" = "Allowed values for {.var param} are:
-            {.val {allowed_vec}} (or NULL)."
-          )
-        )
+        if(param == 'int'){
+        output <- model$emiss_int_bar[[vrb]] %>%
+          tibble::as_tibble()
+        output_long <- output %>%
+      dplyr::mutate(iter = 1:dplyr::n()) %>%
+      tidyr::pivot_longer(-'iter', values_to = 'value', names_to = c('category', 'state'), names_pattern = 'int_Emiss(\\d+)_S(\\d+)') %>%
+      dplyr::mutate(state = factor(.data$state, levels = 1:m, labels = paste('state', 1:m)),
+        category = factor(.data$category, levels = 2:q_vrb, labels = paste('category', 2:q_vrb)))
+        } else {
+          output <- model$emiss_V_int_bar[[vrb]] %>%
+          tibble::as_tibble()
+        output_long <- output %>%
+      dplyr::mutate(iter = 1:dplyr::n()) %>%
+      tidyr::pivot_longer(-'iter', values_to = 'value', names_to = c('category', 'state'), names_pattern = 'var_int_Emiss(\\d+)_S(\\d+)') %>%
+      dplyr::mutate(state = factor(.data$state, levels = 1:m, labels = paste('state', 1:m)),
+        category = factor(.data$category, levels = 2:q_vrb, labels = paste('category', 2:q_vrb)))
+        }
       }
     } else {
-      cli::cli_warn(
-        c(
-          "The function does not take a parameter specification
-          when plotting subject specific distributions.",
-          "i" = "Your input for {.var param} will be ignored."
-        )
-      )
-      param_comb <- component
-    }
-    allparams <- list(
-      "group" = list(
-        "categorical" = c(
-          "emiss" = c("emiss_int_bar", "emiss_prob_bar")[prob + 1],
-          "emiss_var" = "emiss_V_int_bar",
-          "emiss_beta" = "emiss_cov_bar"
-        ),
-        "continuous" = c(
-          "emiss" = "emiss_mu_bar",
-          "emiss_var" = "emiss_varmu_bar",
-          "emiss_sd" = "emiss_sd_bar",
-          "emiss_beta" = "emiss_cov_bar"
-        ),
-        "count" = c(
-          "emiss" = "emiss_mu_bar",
-          "emiss_var" = "emiss_varmu_bar",
-          "emiss_beta" = "emiss_cov_bar"
-        )
-      ),
-      "subject" = list(
-        "categorical" = c("emiss" = c("emiss_int_subj", "cat_emiss")[prob + 1]),
-        "continuous" = c("emiss" = "cont_emiss"),
-        "count" = c("emiss" = "count_emiss")
-      )
-    )[[level]][[data_distr]]
-  } else {
-    if (is.null(param)) {
-      param_comb <- component
-    } else if (level == "group") {
-      if (param %in% c("beta", "var")) {
-        param_comb <- paste0(component, "_", param)
+      if(prob){
+      ncat <- length(model$input$dep_labels)
+      dep_cat <- model$input$dep_labels
+      q_emiss <- model$input$q_emiss
+      if(vrb_ind == 1){
+        vrb_col_indices <- 1:(q_vrb*m)
       } else {
-        cli::cli_abort(
-          c(
-            "x" = "{.val {param}} is not a valid value for {.var param}
-            when plotting the group level transition probability matrix.",
-            "i" = "Allowed values for {.var param} are: {.val var}
-            or {.val beta} (or NULL).",
-            "!" = "Please provide a different value for {.var param}."
-          )
-        )
+        cumul_categories <- sum(q_emiss[1:(vrb_ind-1)])
+        vrb_col_indices <- (cumul_categories*m+1):((cumul_categories*m+q_vrb))
       }
-    } else {
-      cli::cli_warn(
-        c(
-          "The function does not take a parameter specification
-          when plotting subject specific distributions.",
-          "i" = "Your input for {.var param} will be ignored."
-        )
-      )
-      param_comb <- component
-    }
-    allparams <- list(
-      "group" = c(
-        "gamma_beta" = "gamma_cov_bar",
-        "gamma" = c("gamma_int_bar", "gamma_prob_bar")[prob + 1],
-        "gamma_var" = "gamma_V_int_bar"
-      ),
-      "subject" = c("gamma" = c("gamma_int_subj", "trans_prob")[prob + 1])
-    )[[level]]
-  }
-  param_name <- allparams[param_comb]
-  if (
-    param_name %in%
-      c(
-        "trans_prob",
-        "cat_emiss",
-        "cont_emiss",
-        "count_emiss"
-      )
-  ) {
-    obj <- lapply(model, function(x) {
-      x[["PD_subj"]][[subject]][[param_name]] %>%
-        tibble::as_tibble(.name_repair = "minimal")
-    })
-    if (param_name %in% c("cat_emiss", "cont_emiss", "count_emiss")) {
-      obj <- obj %>%
-        lapply(function(x) {
-          x %>%
-            dplyr::select(
-              tidyselect::starts_with(
-                paste0("dep", vrb_ind, "_")
-              ) &
-                !tidyselect::ends_with(c("fixvar", "sd"))
-            )
-        })
-    } else {
-      for (i in 1:n_chains) {
-        colnames(obj[[i]]) <- paste0("S", rep(1:m, each = m), "toS", 1:m)
+      output <- model$PD_subj[[subject]]$cat_emiss[,vrb_col_indices] %>%
+        tibble::as_tibble()
+          output_long <- output %>%
+      dplyr::mutate(iter = 1:dplyr::n()) %>%
+      tidyr::pivot_longer(-'iter', values_to = 'value', names_to = c('state', 'category'), names_pattern = 'dep\\d+_S(\\d+)_emiss(\\d+)') %>%
+      dplyr::mutate(state = factor(.data$state, levels = 1:m, labels = paste('state', 1:m)),
+    category = factor(.data$category, levels = 1:q_vrb, labels = paste('category', 1:q_vrb)))
+      } else {
+        output <- model$emiss_int_subj[[subject]][[vrb]] %>%
+          tibble::as_tibble()
+        output_long <- output %>%
+      dplyr::mutate(iter = 1:dplyr::n()) %>%
+      tidyr::pivot_longer(-'iter', values_to = 'value', names_to = c('category', 'state'), names_pattern = 'int_Emiss(\\d+)_S(\\d+)') %>%
+      dplyr::mutate(state = factor(.data$state, levels = 1:m, labels = paste('state', 1:m)),
+        category = factor(.data$category, levels = 2:q_vrb, labels = paste('category', 2:q_vrb)))
       }
     }
-  } else if (param_name == "emiss_int_subj") {
-    obj <- lapply(model, function(x) {
-      x[[param_name]][[subject]][[vrb]] %>%
-        tibble::as_tibble(.name_repair = "minimal")
-    })
-  } else if (
-    param_name %in%
-      c(
-        "gamma_int_bar",
-        "gamma_cov_bar",
-        "gamma_V_int_bar",
-        "gamma_prob_bar",
-        "emiss_cont_cov_bar",
-        "emiss_cat_cov_bar"
-      )
-  ) {
-    obj <- lapply(model, function(x) {
-      x[[param_name]] %>%
-        tibble::as_tibble(.name_repair = "minimal")
-    })
-  } else if (param_name == "gamma_int_subj") {
-    obj <- lapply(model, function(x) {
-      x[[param_name]][[subject]] %>%
-        tibble::as_tibble(.name_repair = "minimal")
-    })
-  } else if (param_name == "emiss_int_subj") {
-    obj <- lapply(model, function(x) {
-      x[[param_name]][[subject]][[vrb]] %>%
-        tibble::as_tibble(.name_repair = "minimal")
-    })
+    gg <- output_long %>%
+      ggplot2::ggplot(ggplot2::aes(
+        x = .data$iter,
+        y = .data$value
+      )) +
+      ggplot2::geom_line() +
+      ggplot2::facet_grid(rows = ggplot2::vars(.data$state),
+    cols = ggplot2::vars(.data$category))
   } else {
-    obj <- lapply(model, function(x) {
-      x[[param_name]][[vrb]] %>%
-        tibble::as_tibble(.name_repair = "minimal")
-    })
-  }
-  obj <- obj %>%
-    dplyr::bind_rows(.id = "chain") %>%
-    dplyr::mutate(
-      chain = factor(.data$chain, labels = paste("Chain", 1:n_chains))
-    )
-  clnm <- list(
-    "emiss_int_bar" = c("Category", "State"),
-    "emiss_prob_bar" = c("Category", "State"),
-    "emiss_V_int_bar" = c("Category", "State"),
-    "emiss_cov_bar",
-    "emiss_mu_bar" = "State",
-    "emiss_varmu_bar" = "State",
-    "emiss_sd_bar" = "State",
-    "emiss_var_bar" = "State",
-    "emiss_int_subj" = c("Category", "State"),
-    "cat_emiss" = c("State", "Category"),
-    "cont_emiss" = "State",
-    "count_emiss",
-    "gamma_cov_bar",
-    "gamma_int_bar" = c("From", "To"),
-    "gamma_prob_bar" = c("From", "To"),
-    "gamma_V_int_bar" = c("From", "To"),
-    "gamma_int_subj" = c("From", "To"),
-    "trans_prob" = c("From", "To")
-  )
-  facet <- list(
-    "emiss_int_bar" = c("State", "Category"),
-    "emiss_prob_bar" = c("State", "Category"),
-    "emiss_V_int_bar" = c("State", "Category"),
-    "emiss_int_subj" = c("State", "Category"),
-    "cat_emiss" = c("State", "Category"),
-    "gamma_int_bar" = c("From", "To"),
-    "gamma_prob_bar" = c("From", "To"),
-    "gamma_V_int_bar" = c("From", "To"),
-    "gamma_int_subj" = c("From", "To"),
-    "trans_prob" = c("From", "To")
-  )
-  colmns <- clnm[[param_name]]
-  if (is.null(vrb_ind)) {
-    vrb_ind <- 1
-  }
-  ptrns <- c(
-    "emiss_int_bar" = "int_Emiss(\\d+)_S(\\d+)",
-    "emiss_prob_bar" = "Emiss(\\d+)_S(\\d+)",
-    "emiss_V_int_bar" = "var_int_Emiss(\\d+)_S(\\d+)",
-    "emiss_cov_bar",
-    "emiss_mu_bar" = "mu_(\\d+)",
-    "emiss_varmu_bar" = "varmu_(\\d+)",
-    "emiss_sd_bar" = "sd_(\\d+)",
-    "emiss_var_bar" = "var_(\\d+)",
-    "emiss_int_subj" = "int_Emiss(\\d+)_S(\\d+)",
-    "cat_emiss" = paste0("dep", vrb_ind, "_S(\\d+)_emiss(\\d+)"),
-    "cont_emiss" = paste0("dep", vrb_ind, "_S(\\d+)_mu"),
-    "count_emiss",
-    "gamma_cov_bar",
-    "gamma_int_bar" = "int_S(\\d+)toS(\\d+)",
-    "gamma_prob_bar" = "S(\\d+)toS(\\d+)",
-    "gamma_V_int_bar" = "int_S(\\d+)toS(\\d+)",
-    "gamma_int_subj" = "S(\\d+)toS(\\d+)",
-    "trans_prob" = "S(\\d+)toS(\\d+)"
-  )
-  pat <- ptrns[param_name]
-  obj <- obj %>%
-    dplyr::group_by(.data$chain) %>%
-    dplyr::mutate(iter = seq_len(dplyr::n())) %>%
-    dplyr::ungroup() %>%
-    tidyr::pivot_longer(
-      cols = !c("chain", "iter"),
-      names_to = colmns,
-      names_pattern = pat
-    )
-  if (!is.null(state_labels)) {
-    if (length(state_labels) != m) {
-      cli::cli_warn(
-        c(
-          "The number of names provided in {.var state_labels}
-          must equal the number of states.",
-          "i" = "The number of states is {m}.",
-          "x" = "You provided {length(state_labels)} names.",
-          "i" = "The state labels you provided will be ignored."
-        )
-      )
-      obj <- obj %>%
-        dplyr::mutate(dplyr::across(
-          tidyselect::any_of(c("State", "From", "To")),
-          ~ factor(
-            .x,
-            levels = 1:m,
-            labels = paste("State", 1:m)
-          )
-        ))
-    } else {
-      obj <- obj %>%
-        dplyr::mutate(dplyr::across(
-          tidyselect::any_of(c("State", "From", "To")),
-          ~ factor(.x, levels = 1:m, labels = state_labels)
-        ))
+    if(level == 'group'){
+      subject <- NULL
     }
-  } else {
-    obj <- obj %>%
-      dplyr::mutate(dplyr::across(
-        tidyselect::any_of(c("State", "From", "To")),
-        ~ factor(.x, levels = 1:m, labels = paste("State", 1:m))
-      ))
-  }
-  if (!is.null(cat_labels) && ("Category" %in% colnames(obj))) {
-    n_levels_cat <- model_1$input$q_emiss[vrb_ind]
-    if (length(cat_labels) != n_levels_cat) {
-      cli::cli_warn(
-        c(
-          "The number of names provided in {.var cat_labels} must equal
-          the number of category values.",
-          "i" = "The number of category values is {n_levels_cat}.",
-          "x" = "You provided {length(cat_labels)} names.",
-          "i" = "The category labels you provided will be ignored."
-        )
-      )
-      n_levels_cat <- model_1$input$q_emiss[vrb_ind]
-      obj <- obj %>%
-        dplyr::mutate(
-          Category = factor(
-            .data$Category,
-            levels = 1:n_levels_cat,
-            labels = paste("Category", 1:n_levels_cat)
-          )
-        )
-    } else {
-      obj <- obj %>%
-        dplyr::mutate(
-          Category = factor(
-            .data$Category,
-            levels = 1:n_levels_cat,
-            labels = cat_labels
-          )
-        )
+    if(is.null(param)){
+      param <- 'int'
     }
-  } else if ("Category" %in% colnames(obj)) {
-    n_levels_cat <- model_1$input$q_emiss[vrb_ind]
-    obj <- obj %>%
-      dplyr::mutate(
-        Category = factor(
-          .data$Category,
-          levels = 1:n_levels_cat,
-          labels = paste("Category", 1:n_levels_cat)
-        )
-      )
+    gg <- plot_trace_gamma(model, m, param = param, level, subject = subject)
   }
-  if (n_chains > 1) {
-    gg <- obj %>%
-      ggplot2::ggplot(
-        mapping = ggplot2::aes(
-          x = .data$iter,
-          y = .data$value,
-          color = .data$chain
-        )
-      )
-  } else {
-    gg <- obj %>%
-      ggplot2::ggplot(mapping = ggplot2::aes(x = .data$iter, y = .data$value))
-  }
-  gg <- gg +
-    ggplot2::geom_line(alpha = alpha)
-  if (length(colmns) == 2) {
-    gg <- gg +
-      ggplot2::facet_grid(
-        rows = ggplot2::vars(!!rlang::sym(facet[[param_name]][1])),
-        cols = ggplot2::vars(!!rlang::sym(facet[[param_name]][2]))
-      )
-  } else {
-    gg <- gg +
-      ggplot2::facet_grid(
-        rows = ggplot2::vars(
-          !!rlang::sym(clnm[[param_name]])
-        )
-      )
-  }
-  gg <- gg +
-    theme_mhmm() +
-    scale_color_mhmm(which = "color")
   return(gg)
+}
+
+#' @keywords internal
+# trace plot for gamma (group level)
+plot_trace_gamma <- function(model,
+  m,
+  param = 'int',
+  level,
+  subject = NULL) {
+  if(param == 'prob'){
+    if(level == 'group'){
+      output <- model$gamma_prob_bar %>%
+      tibble::as_tibble()
+    } else {
+      output <- model$PD_subj[[subject]]$trans_prob %>%
+        tibble::as_tibble(.name_repair = ~ vctrs::vec_as_names(names = paste0('S', rep(1:m, each = m), 'toS', rep(1:m, times = m)), quiet = TRUE))
+    }
+    output_long <- output %>%
+      dplyr::mutate(iter = 1:dplyr::n()) %>%
+      tidyr::pivot_longer(-'iter',
+        names_to = c('From', 'To'),
+        names_pattern = 'S(\\d+)toS(\\d+)',
+        values_to = 'prob'
+      ) %>%
+      dplyr::mutate(From = factor(.data$From, levels = 1:m, labels = paste('From State', 1:m)),
+    To = factor(.data$To, levels = 1:m, labels = paste('To State', 1:m)))
+    gg <- output_long %>%
+      ggplot2::ggplot(ggplot2::aes(x = .data$iter, y = .data$prob)) +
+      ggplot2::geom_line() +
+      ggplot2::facet_grid(
+        rows = ggplot2::vars(.data$From),
+        cols = ggplot2::vars(.data$To)
+      )
+  } else if(param == 'int') {
+    if(level == 'group'){
+      output <- model$gamma_int_bar %>%
+      tibble::as_tibble()
+    } else {
+      output <- model$gamma_int_subj[[subject]] %>%
+      tibble::as_tibble()
+    }
+    output_long <- output %>%
+      dplyr::mutate(iter = 1:dplyr::n()) %>%
+      tidyr::pivot_longer(-'iter',
+        names_to = c('From', 'To'),
+        names_pattern = 'int_S(\\d+)toS(\\d+)',
+        values_to = 'prob'
+      ) %>%
+      dplyr::mutate(From = factor(.data$From, levels = 1:m, labels = paste('From State', 1:m)),
+    To = factor(.data$To, levels = 2:m, labels = paste('To State', 2:m)))
+    gg <- output_long %>%
+      ggplot2::ggplot(ggplot2::aes(x = .data$iter, y = .data$prob)) +
+      ggplot2::geom_line() +
+      ggplot2::facet_grid(
+        rows = ggplot2::vars(.data$From),
+        cols = ggplot2::vars(.data$To))
+  } else if (param == 'varint'){
+    output <- model$gamma_V_int_bar %>%
+      tibble::as_tibble()
+    output_long <- output %>%
+      dplyr::mutate(iter = 1:dplyr::n()) %>%
+      tidyr::pivot_longer(-'iter',
+        names_to = c('From', 'To'),
+        names_pattern = 'var_int_S(\\d+)toS(\\d+)',
+        values_to = 'prob'
+      ) %>%
+      dplyr::mutate(From = factor(.data$From, levels = 1:m, labels = paste('From State', 1:m)),
+    To = factor(.data$To, levels = 2:m, labels = paste('To State', 2:m)))
+    gg <- output_long %>%
+      ggplot2::ggplot(ggplot2::aes(x = .data$iter, y = .data$prob)) +
+      ggplot2::geom_line() +
+      ggplot2::facet_grid(
+        rows = ggplot2::vars(.data$From),
+        cols = ggplot2::vars(.data$To)
+      )
+  }
+  return(gg)
+}
+
+#' Plot trace plots to assess convergence for data of varying types
+#' of a Bayesian Multilevel Hidden Markov Model
+#'
+#' @param model Object or a list of objects of type `mHMMbayes::mHMM`
+#' created using [mHMMbayes::mHMM()].
+#' @param data_distr String specifying the data type to plot. Takes 'categorical' or 'continuous'.
+#' @param component Character string specifying the component to plot.
+#' Takes "gamma" or "emiss".
+#' @param param Optional character string specifying the parameter to plot
+#' for the plotted component.
+#' If `NULL` (default) or 'mu', plots the means (or probabilities).
+#' Takes "varmu" for between-person variances,
+#' "sd" for standard deviations of normal emission distributions,
+#' and "cov" for regression coefficients of covariates.
+#' @param level Character string specifying the level of parameter to plot.
+#' Takes "group" or "subject".
+#' @param vrb Character string specifying the variable to plot.
+#' @param subject Integer specifying the subject to plot
+#' subject specific parameters for.
+#' @param ... Currently not in use
+#'
+#' @return Object of type `ggplot2::gg`, plotting parameter distributions.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' library(mHMMbayes)
+#' # simulating multivariate continuous data
+#' n_t <- 100
+#' n <- 10
+#' m <- 3
+#' n_dep <- 2
+#'
+#' gamma <- matrix(c(
+#'   0.8, 0.1, 0.1,
+#'   0.2, 0.7, 0.1,
+#'   0.2, 0.2, 0.6
+#' ), ncol = m, byrow = TRUE)
+#'
+#' emiss_distr <- list(
+#'   matrix(c(
+#'     50, 10,
+#'     100, 10,
+#'     150, 10
+#'   ), nrow = m, byrow = TRUE),
+#'   matrix(c(
+#'     5, 2,
+#'     10, 5,
+#'     20, 3
+#'   ), nrow = m, byrow = TRUE)
+#' )
+#'
+#' data_cont <- sim_mHMM(
+#'   n_t = n_t, n = n, data_distr = "continuous",
+#'   gen = list(m = m, n_dep = n_dep),
+#'   gamma = gamma, emiss_distr = emiss_distr,
+#'   var_gamma = .1, var_emiss = c(5^2, 0.2^2)
+#' )
+#'
+#' # Specify hyper-prior for the continuous emission distribution
+#' manual_prior_emiss <- prior_emiss_cont(
+#'   gen = list(m = m, n_dep = n_dep),
+#'   emiss_mu0 = list(
+#'     matrix(c(30, 70, 170), nrow = 1),
+#'     matrix(c(7, 8, 18), nrow = 1)
+#'   ),
+#'   emiss_K0 = list(1, 1),
+#'   emiss_V = list(rep(5^2, m), rep(0.5^2, m)),
+#'   emiss_nu = list(1, 1),
+#'   emiss_a0 = list(rep(1.5, m), rep(1, m)),
+#'   emiss_b0 = list(rep(20, m), rep(4, m))
+#' )
+#'
+#' # Run the model on the simulated data:
+#' # Note that for reasons of running time, J is set at a ridiculous low value.
+#' # One would typically use a number of iterations J of at least 1000,
+#' # and a burn_in of 200.
+#' out_3st_cont_sim <- mHMM(
+#'   s_data = data_cont$obs,
+#'   data_distr = "continuous",
+#'   gen = list(m = m, n_dep = n_dep),
+#'   start_val = c(list(gamma), emiss_distr),
+#'   emiss_hyp_prior = manual_prior_emiss,
+#'   mcmc = list(J = 11, burn_in = 5)
+#' )
+#'
+#' plot_trace(
+#'   model = out_3st_cont_sim,
+#'   param = "gamma",
+#'   level = "group",
+#'   prob = TRUE
+#' )
+#' }
+plot_trace.mHMM_vary <- function(
+  model,
+  data_distr = 'categorical',
+  component = "gamma",
+  param = NULL,
+  level = "group",
+  vrb = NULL,
+  subject = NULL,
+  ...
+){
+    if(component == 'gamma'){
+    class(model) <- c('cont', 'mHMM', 'list')
+    model$input$n_dep <- sum(model$input$data_distr == 'continuous')
+    model$input$dep_labels <- model$input$dep_labels[model$input$data_distr == 'continuous']
+    model$input$data_distr <- 'continuous'
+    plot_trace(
+      model = model,
+      component = component,
+      param = param,
+      level = level,
+      vrb = vrb,
+      subject = subject
+    )
+  } else if(component == 'emiss'){
+    if(data_distr == 'continuous'){
+      class(model) <- c('cont', 'mHMM', 'list')
+    model$input$n_dep <- sum(model$input$data_distr == 'continuous')
+    model$input$dep_labels <- model$input$dep_labels[model$input$data_distr == 'continuous']
+    model$input$data_distr <- 'continuous'
+    plot_trace(
+      model = model,
+      component = component,
+      param = param,
+      level = level,
+      vrb = vrb,
+      subject = subject
+    )
+    } else if(data_distr == 'categorical'){
+      class(model) <- c('cat', 'mHMM', 'list')
+    model$input$n_dep <- sum(model$input$data_distr == 'categorical')
+    model$input$dep_labels <- model$input$dep_labels[model$input$data_distr == 'categorical']
+    model$input$q_emiss <- model$input$q_emiss[model$input$data_distr == 'categorical']
+    model$input$data_distr <- 'categorical'
+    if(is.null(vrb)){
+      vrb <- model$input$dep_labels[1]
+    }
+    plot_trace(
+      model = model,
+      component = component,
+      level = level,
+      vrb = vrb,
+      subject = subject
+    )
+    }
+  }
 }
