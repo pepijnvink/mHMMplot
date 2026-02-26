@@ -10,6 +10,8 @@
   data_distr = "categorical",
   level = "group",
   prob = TRUE,
+  ci = TRUE,
+  ess = TRUE,
   quantiles = c(0.025, 0.975),
   subjects = NULL,
   burn_in = NULL,
@@ -26,6 +28,10 @@
 \item{level}{String specifying the level to obtain a tidy summary for. Takes 'group' or 'subject'}
 
 \item{prob}{If `TRUE`, returns parameters on the probability scale, if FALSE, returns parameters on the logit scale.}
+
+\item{ci}{Logical indicating whether credible intervals should be computed.}
+
+\item{ess}{Logical indicating whether effective sample size should be computed.}
 
 \item{quantiles}{Numeric vector specifying the quantiles to use to obtain credible intervals.}
 

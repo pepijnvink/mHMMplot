@@ -13,7 +13,7 @@
   subject = NULL,
   vrb = NULL,
   facet = "state",
-  errorbar = "ci",
+  errorbar = TRUE,
   errorbar_prob = 0.95,
   alpha = 0.3,
   jitter = ggplot2::position_jitter(width = 0.2, height = 0),
@@ -45,7 +45,7 @@ categorical data. If not specified, it plots the first variable.}
 
 \item{facet}{String specifying the dimension to facet. Takes 'state' (default) or 'vrb'.}
 
-\item{errorbar}{Optional string indicating the type of error bar to use.}
+\item{errorbar}{Logical indicating whether to include errorbars.}
 
 \item{errorbar_prob}{Optional scalar between 0 and 1 indicating the confidence level to create errorbars for. Only used when `errorbar` is equal to `ci` or `hpd`.}
 
