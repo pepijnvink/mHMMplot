@@ -1,6 +1,6 @@
 #' Create mHMM_list object with multiple chains
 #' 
-#' @param models List of mHMM objects
+#' @param models List of objects of type `[mHMM::mHMM()]` consisting of different chains.
 #' 
 #' @returns An object of type [[mHMMplot::mHMM_list]]
 #' 
@@ -31,7 +31,7 @@ mHMM_list <- function(models){
       class(models) <- c('mHMM_list_cat', 'mHMM_list', 'list')
     }
   } else {
-    class(models) <- c('mHMM_list_cat', 'mHMM_list', 'list')
+    class(models) <- c('mHMM_list_vary', 'mHMM_list', 'list')
   }
   return(models)
 }
