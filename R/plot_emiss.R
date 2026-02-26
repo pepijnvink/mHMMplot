@@ -161,15 +161,17 @@ plot_emiss.cont <- function(model,
     errorbar <- "ci"
   }
   if(errorbar == 'ci'){
+    request_ci = TRUE
     bounds_errorbar <- c((1-errorbar_prob)/2, (1-(1-errorbar_prob)/2))
   } else {
-    bounds_errorbar <- c(0.025, 0.975)
+    request_ci = FALSE
+    bounds_errorbar <- NULL
   }
   state_labels <- paste("State", 1:m)
   distr <- model$input$data_distr
   n_dep <- model$input$n_dep
   if (type == "bar" | type == "point") {
-      emiss_group_melt <- tidy_mHMM(model, param = 'emiss', burn_in = burn_in)
+      emiss_group_melt <- tidy_mHMM(model, param = 'emiss', ci = request_ci, ess = FALSE, quantiles = bounds_errorbar, burn_in = burn_in)
       emiss_group_mu <- emiss_group_melt %>%
         dplyr::filter(.data$param == 'mu')
       if (!is.null(errorbar)) {
@@ -178,20 +180,20 @@ plot_emiss.cont <- function(model,
             dplyr::filter(.data$param == 'sdmu') %>%
             dplyr::pull(.data$median)
           emiss_group_mu <- emiss_group_mu %>%
-            dplyr::select(.data$vrb, .data$state, .data$median) %>%
-            dplyr::rename(mean = .data$median) %>%
+            dplyr::select('vrb', 'state', 'median') %>%
+            dplyr::rename(mean = 'median') %>%
             dplyr::mutate(lower = .data$mean - emiss_group_sdmu,
             upper = .data$mean + emiss_group_sdmu)
           note_errorbar <- "Errorbars represent the between-person standard deviation"
         } else if(errorbar == 'ci'){
           emiss_group_mu <- emiss_group_mu %>%
-            dplyr::select(-c(.data$param, .data$level, .data$mean)) %>%
+            dplyr::select(-c('param', 'level', 'mean')) %>%
             dplyr::rename_with(~c('vrb', 'state', 'mean', 'lower', 'upper'))
           note_errorbar <- paste0("Errorbars represent the ", errorbar_prob*100,"% credible interval")
         }
       } else {
         emiss_group_mu <- emiss_group_mu %>%
-          dplyr::select(.data$vrb, .data$state, .data$median) %>%
+          dplyr::select('vrb', 'state', 'median') %>%
           dplyr::rename(mean = .data$median)
       }
     if (type == "bar") {
@@ -238,7 +240,7 @@ plot_emiss.cont <- function(model,
         ggplot2::geom_col()
     }
     if (subject_effects) {
-        gg_emiss_subject <- tidy_mHMM(model, param = 'emiss', level = 'subject', subject = subject)
+        gg_emiss_subject <- tidy_mHMM(model, param = 'emiss', level = 'subject', ci = request_ci, ess = FALSE, quantiles = bounds_errorbar, subject = subject, burn_in = burn_in)
       if(facet == 'state'){
         gg <- gg +
           ggplot2::geom_jitter(
@@ -379,7 +381,7 @@ plot_emiss.cont <- function(model,
 #' @param vrb Optional string specifying the variable to plot when using
 #' categorical data. If not specified, it plots the first variable.
 #' @param facet String specifying the dimension to facet. Takes 'state' (default) or 'vrb'.
-#' @param errorbar Optional string indicating the type of error bar to use.
+#' @param errorbar Logical indicating whether to include errorbars.
 #' @param errorbar_prob Optional scalar between 0 and 1 indicating the confidence level to create errorbars for. Only used when `errorbar` is equal to `ci` or `hpd`.
 #' @param alpha Numeric value indicating transparency of subject-specific
 #' posterior densities.
@@ -464,7 +466,7 @@ plot_emiss.cat <- function(model,
                        subject = NULL,
                        vrb = NULL,
                        facet = 'state',
-                       errorbar = 'ci',
+                       errorbar = TRUE,
                        errorbar_prob = 0.95,
                        alpha = 0.3,
                        jitter = ggplot2::position_jitter(
@@ -482,14 +484,14 @@ plot_emiss.cat <- function(model,
   if (is.null(burn_in)) {
     burn_in <- model$input$burn_in
   }
-  if(!is.null(errorbar)){
-    if(errorbar %nin% c('sd', 'ci')){
-      cli::cli_abort(c(
-        "Argument {.var errorbar} takes 'sd' or 'ci'",
-        'x' = 'Invalid entry for argument {.var errorbar}',
-        'i' = 'Please specify a different value'
+  if(inherits(errorbar, 'character')){
+    cli::cli_abort(c(
+        'Argument {.var errorbar} should be a logical indicating whether to plot the credible interval',
+        'x' = 'You specified a string',
+        'i' = 'Please specify a logical'
       ))
-    }
+  }
+  if(errorbar){
     if((length(errorbar_prob) != 1)){
       cli::cli_abort(c(
         'Argument {.var errorbar} should be a single number between 0 and 1',
@@ -513,35 +515,30 @@ plot_emiss.cat <- function(model,
     }
   }
   if (type == "point" & is.null(errorbar)) {
-    errorbar <- "ci"
+    errorbar <- TRUE
   }
-  if(errorbar == 'ci'){
+  if(errorbar){
+    request_ci <- TRUE
     bounds_errorbar <- c((1-errorbar_prob)/2, (1-(1-errorbar_prob)/2))
   } else {
-    bounds_errorbar <- c(0.025, 0.975)
+    request_ci <- FALSE
+    bounds_errorbar <- NULL
   }
   state_labels <- paste("State", 1:m)
   distr <- model$input$data_distr
   n_dep <- model$input$n_dep
   if (type == "bar" | type == "point") {
-      emiss_group_melt <- tidy_mHMM(model, param = 'emiss', burn_in = burn_in)
+      emiss_group_melt <- tidy_mHMM(model, param = 'emiss', level = 'group', ci = request_ci, ess = FALSE, quantiles = bounds_errorbar, burn_in = burn_in)
       emiss_group_mu <- emiss_group_melt %>%
         dplyr::filter(.data$param == 'emiss_prob')
-      if (!is.null(errorbar)) {
-        if (errorbar == "sd") {
-          cli::cli_abort(c("You specified `errorbar = 'sd'`.",
-                           "x" = "Cannot plot between-subject standard deviation for categorical data.",
-                           "i" = "Please specify `errorbar = NULL` or errorbar = 'ci'"
-                           ))
-        } else if(errorbar == 'ci'){
+      if (errorbar) {
           emiss_group_mu <- emiss_group_mu %>%
-            dplyr::select(-c(.data$param, .data$level, .data$mean)) %>%
+            dplyr::select(-c('param', 'level', 'mean')) %>%
             dplyr::rename_with(~c('vrb', 'category', 'state', 'mean', 'lower', 'upper'))
           note_errorbar <- paste0("Errorbars represent the ", errorbar_prob*100,"% credible interval")
-        }
-      } else {
+        } else {
         emiss_group_mu <- emiss_group_mu %>%
-          dplyr::select(.data$category, .data$state, .data$median) %>%
+          dplyr::select('category', 'state', 'median') %>%
           dplyr::rename(mean = .data$median)
       }
     if (type == "bar") {
@@ -588,7 +585,7 @@ plot_emiss.cat <- function(model,
         ggplot2::geom_col()
     }
     if (subject_effects) {
-        gg_emiss_subject <- tidy_mHMM(model, param = 'emiss', level = 'subject', subject = subject)
+        gg_emiss_subject <- tidy_mHMM(model, param = 'emiss', level = 'subject', burn_in = burn_in, ess = FALSE, ci = FALSE, subject = subject)
       if(facet == 'state'){
         gg <- gg +
           ggplot2::geom_jitter(
@@ -647,7 +644,7 @@ plot_emiss.cat <- function(model,
         }
       }
     }
-    if (!is.null(errorbar)) {
+    if (errorbar) {
       gg <- gg +
         ggplot2::geom_point(size = 4) +
         ggplot2::geom_segment(
@@ -846,6 +843,11 @@ plot_emiss.mHMM_vary <- function(model,
     model$input$dep_labels <- model$input$dep_labels[model$input$data_distr == 'categorical']
     model$input$q_emiss <- model$input$q_emiss[model$input$data_distr == 'categorical']
     model$input$data_distr <- 'categorical'
+    if(errorbar == 'ci'){
+      errorbar <- TRUE
+    } else {
+      errorbar = FALSE
+    }
     plot_emiss(model = model,
                        type = type,
                        subject_effects = subject_effects,

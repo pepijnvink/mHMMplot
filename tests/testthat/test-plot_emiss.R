@@ -56,7 +56,7 @@ test_that("Obtain plots (categorical)", {
     plot_emiss(
       out_3st_cat,
       type = "bar",
-      errorbar = "ci"
+      errorbar = TRUE
     ),
     "ggplot"
   )
@@ -65,7 +65,7 @@ test_that("Obtain plots (categorical)", {
       out_3st_cat,
       type = "bar",
       subject_effects = TRUE,
-      errorbar = "ci",
+      errorbar = TRUE,
       vrb = "p_looking"
     ),
     "ggplot"
@@ -75,7 +75,7 @@ test_that("Obtain plots (categorical)", {
       out_3st_cat,
       type = "point",
       subject_effects = TRUE,
-      errorbar = "ci",
+      errorbar = TRUE,
       vrb = "p_looking"
     ),
     "ggplot"
@@ -85,7 +85,7 @@ test_that("Obtain plots (categorical)", {
       out_3st_cat,
       type = "bar",
       subject_effects = TRUE,
-      errorbar = "ci",
+      errorbar = TRUE,
       vrb = "t_looking"
     ),
     "ggplot"

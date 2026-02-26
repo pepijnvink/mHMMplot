@@ -305,15 +305,17 @@ tidy_mHMM.cont <- function(
     ))
     param <- 'gamma'
   }
+  if(ci){
     if(!is.numeric(quantiles)){
     cli::cli_abort(c('!' = 'The argument {.var quantiles} must be a numeric vector.',
-    'x' = 'You have specified a {.cls {class(quantiles)}} vector.'
+    'x' = 'You have specified an object of type {.cls {class(quantiles)}}.'
     ))
   }
   if(min(quantiles) < 0 | max(quantiles) > 1){
     cli::cli_abort(c('!' = 'The elements in {.var quantiles} must be between 0 and 1.',
     'x' = 'At least one element is outside of these bounds.'
     ))
+  }
   }
   J <- model$input$J
   m <- model$input$m
@@ -844,7 +846,7 @@ tidy_mHMM.cat <- function(
         if(ess){
           ess_bulk_emiss_prob <- apply(model$PD_subj[[i]]$cat_emiss[(burn_in + 1):J, ], 2, posterior::ess_bulk)
           ess_tail_emiss_prob <- apply(model$PD_subj[[i]]$cat_emiss[(burn_in + 1):J, ], 2, posterior::ess_tail)
-          allpars <- allpars %>%
+          all_emiss_i <- all_emiss_i %>%
             cbind(data.frame(ess_bulk = ess_bulk_emiss_prob, ess_tail = ess_tail_emiss_prob))
         }
         all_emiss[[i]] <- all_emiss_i %>%
