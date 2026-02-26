@@ -7,7 +7,7 @@
 mHMM_list(models)
 }
 \arguments{
-\item{models}{List of mHMM objects}
+\item{models}{List of objects of type `[mHMM::mHMM()]` consisting of different chains.}
 }
 \value{
 An object of type [[mHMMplot::mHMM_list]]
