@@ -103,21 +103,23 @@ plot_emiss <- function(model, ...) {
 #'
 #' plot_emiss(out_3st_cont_sim)
 #' }
-plot_emiss.cont <- function(model,
-                       type = "bar",
-                       subject_effects = TRUE,
-                       line = FALSE,
-                       subject = NULL,
-                       facet = 'state',
-                       errorbar = 'ci',
-                       errorbar_prob = 0.95,
-                       alpha = 0.3,
-                       jitter = ggplot2::position_jitter(
-                         width = 0.2,
-                         height = 0
-                       ),
-                       burn_in = NULL,
-                      ...) {
+plot_emiss.cont <- function(
+  model,
+  type = "bar",
+  subject_effects = TRUE,
+  line = FALSE,
+  subject = NULL,
+  facet = 'state',
+  errorbar = 'ci',
+  errorbar_prob = 0.95,
+  alpha = 0.3,
+  jitter = ggplot2::position_jitter(
+    width = 0.2,
+    height = 0
+  ),
+  burn_in = NULL,
+  ...
+) {
   check_model(model, classes = "mHMM")
   m <- model$input$m
   n_subj <- model$input$n_subj
@@ -127,29 +129,29 @@ plot_emiss.cont <- function(model,
   if (is.null(burn_in)) {
     burn_in <- model$input$burn_in
   }
-  if(!is.null(errorbar)){
-    if(errorbar %nin% c('sd', 'ci')){
+  if (!is.null(errorbar)) {
+    if (errorbar %nin% c('sd', 'ci')) {
       cli::cli_abort(c(
         "Argument {.var errorbar} takes 'sd' or 'ci'",
         'x' = 'Invalid entry for argument {.var errorbar}',
         'i' = 'Please specify a different value'
       ))
     }
-    if((length(errorbar_prob) != 1)){
+    if ((length(errorbar_prob) != 1)) {
       cli::cli_abort(c(
         'Argument {.var errorbar} should be a single number between 0 and 1',
         'x' = 'You specified a vector',
         'i' = 'Please specify a different value'
       ))
     }
-    if(!is.numeric(errorbar_prob)){
+    if (!is.numeric(errorbar_prob)) {
       cli::cli_abort(c(
         'Argument {.var errorbar} should be a single number between 0 and 1',
         'x' = 'You specified a value of class {.cls {class(errorbar_prob)}}',
         'i' = 'Please specify a numeric value'
       ))
     }
-    if(errorbar_prob <= 0 | errorbar_prob >= 1){
+    if (errorbar_prob <= 0 | errorbar_prob >= 1) {
       cli::cli_abort(c(
         'Argument {.var errorbar} should be a number between 0 and 1',
         'x' = 'You specified a value outside of these bounds',
@@ -160,9 +162,9 @@ plot_emiss.cont <- function(model,
   if (type == "point" & is.null(errorbar)) {
     errorbar <- "ci"
   }
-  if(errorbar == 'ci'){
+  if (errorbar == 'ci') {
     request_ci = TRUE
-    bounds_errorbar <- c((1-errorbar_prob)/2, (1-(1-errorbar_prob)/2))
+    bounds_errorbar <- c((1 - errorbar_prob) / 2, (1 - (1 - errorbar_prob) / 2))
   } else {
     request_ci = FALSE
     bounds_errorbar <- NULL
@@ -171,33 +173,46 @@ plot_emiss.cont <- function(model,
   distr <- model$input$data_distr
   n_dep <- model$input$n_dep
   if (type == "bar" | type == "point") {
-      emiss_group_melt <- tidy_mHMM(model, param = 'emiss', ci = request_ci, ess = FALSE, quantiles = bounds_errorbar, burn_in = burn_in)
-      emiss_group_mu <- emiss_group_melt %>%
-        dplyr::filter(.data$param == 'mu')
-      if (!is.null(errorbar)) {
-        if (errorbar == "sd") {
-          emiss_group_sdmu <- emiss_group_melt %>%
-            dplyr::filter(.data$param == 'sdmu') %>%
-            dplyr::pull(.data$median)
-          emiss_group_mu <- emiss_group_mu %>%
-            dplyr::select('vrb', 'state', 'median') %>%
-            dplyr::rename(mean = 'median') %>%
-            dplyr::mutate(lower = .data$mean - emiss_group_sdmu,
-            upper = .data$mean + emiss_group_sdmu)
-          note_errorbar <- "Errorbars represent the between-person standard deviation"
-        } else if(errorbar == 'ci'){
-          emiss_group_mu <- emiss_group_mu %>%
-            dplyr::select(-c('param', 'level', 'mean')) %>%
-            dplyr::rename_with(~c('vrb', 'state', 'mean', 'lower', 'upper'))
-          note_errorbar <- paste0("Errorbars represent the ", errorbar_prob*100,"% credible interval")
-        }
-      } else {
+    emiss_group_melt <- tidy_mHMM(
+      model,
+      param = 'emiss',
+      ci = request_ci,
+      ess = FALSE,
+      quantiles = bounds_errorbar,
+      burn_in = burn_in
+    )
+    emiss_group_mu <- emiss_group_melt %>%
+      dplyr::filter(.data$param == 'mu')
+    if (!is.null(errorbar)) {
+      if (errorbar == "sd") {
+        emiss_group_sdmu <- emiss_group_melt %>%
+          dplyr::filter(.data$param == 'sdmu') %>%
+          dplyr::pull(.data$median)
         emiss_group_mu <- emiss_group_mu %>%
           dplyr::select('vrb', 'state', 'median') %>%
-          dplyr::rename(mean = .data$median)
+          dplyr::rename(mean = 'median') %>%
+          dplyr::mutate(
+            lower = .data$mean - emiss_group_sdmu,
+            upper = .data$mean + emiss_group_sdmu
+          )
+        note_errorbar <- "Errorbars represent the between-person standard deviation"
+      } else if (errorbar == 'ci') {
+        emiss_group_mu <- emiss_group_mu %>%
+          dplyr::select(-c('param', 'level', 'mean')) %>%
+          dplyr::rename_with(~ c('vrb', 'state', 'mean', 'lower', 'upper'))
+        note_errorbar <- paste0(
+          "Errorbars represent the ",
+          errorbar_prob * 100,
+          "% credible interval"
+        )
       }
+    } else {
+      emiss_group_mu <- emiss_group_mu %>%
+        dplyr::select('vrb', 'state', 'median') %>%
+        dplyr::rename(mean = .data$median)
+    }
     if (type == "bar") {
-      if(facet == 'state'){
+      if (facet == 'state') {
         gg <- ggplot2::ggplot(
           data = emiss_group_mu,
           mapping = ggplot2::aes(
@@ -206,7 +221,7 @@ plot_emiss.cont <- function(model,
             fill = .data$vrb
           )
         )
-      } else if(facet == 'vrb'){
+      } else if (facet == 'vrb') {
         gg <- ggplot2::ggplot(
           data = emiss_group_mu,
           mapping = ggplot2::aes(
@@ -217,7 +232,7 @@ plot_emiss.cont <- function(model,
         )
       }
     } else if (type == "point") {
-      if(facet == 'state'){
+      if (facet == 'state') {
         gg <- ggplot2::ggplot(
           data = emiss_group_mu,
           mapping = ggplot2::aes(
@@ -225,7 +240,7 @@ plot_emiss.cont <- function(model,
             y = .data$mean
           )
         )
-      } else if(facet == 'vrb'){
+      } else if (facet == 'vrb') {
         gg <- ggplot2::ggplot(
           data = emiss_group_mu,
           mapping = ggplot2::aes(
@@ -240,8 +255,17 @@ plot_emiss.cont <- function(model,
         ggplot2::geom_col()
     }
     if (subject_effects) {
-        gg_emiss_subject <- tidy_mHMM(model, param = 'emiss', level = 'subject', ci = request_ci, ess = FALSE, quantiles = bounds_errorbar, subject = subject, burn_in = burn_in)
-      if(facet == 'state'){
+      gg_emiss_subject <- tidy_mHMM(
+        model,
+        param = 'emiss',
+        level = 'subject',
+        ci = request_ci,
+        ess = FALSE,
+        quantiles = bounds_errorbar,
+        subject = subject,
+        burn_in = burn_in
+      )
+      if (facet == 'state') {
         gg <- gg +
           ggplot2::geom_jitter(
             data = gg_emiss_subject,
@@ -269,7 +293,7 @@ plot_emiss.cont <- function(model,
               color = "grey"
             )
         }
-      } else if(facet == 'vrb'){
+      } else if (facet == 'vrb') {
         gg <- gg +
           ggplot2::geom_jitter(
             data = gg_emiss_subject,
@@ -347,7 +371,7 @@ plot_emiss.cont <- function(model,
     ) +
       ggplot2::geom_boxplot()
   }
-  if(facet == 'state'){
+  if (facet == 'state') {
     gg <- gg +
       ggplot2::facet_grid(cols = ggplot2::vars(.data$state))
   } else {
@@ -458,23 +482,25 @@ plot_emiss.cont <- function(model,
 #'
 #' plot_emiss(out_3st_cont_sim)
 #' }
-plot_emiss.cat <- function(model,
-                       type = "bar",
-                       subject_effects = TRUE,
-                       cat_labels = NULL,
-                       line = FALSE,
-                       subject = NULL,
-                       vrb = NULL,
-                       facet = 'state',
-                       errorbar = TRUE,
-                       errorbar_prob = 0.95,
-                       alpha = 0.3,
-                       jitter = ggplot2::position_jitter(
-                         width = 0.2,
-                         height = 0
-                       ),
-                       burn_in = NULL,
-                      ...) {
+plot_emiss.cat <- function(
+  model,
+  type = "bar",
+  subject_effects = TRUE,
+  cat_labels = NULL,
+  line = FALSE,
+  subject = NULL,
+  vrb = NULL,
+  facet = 'state',
+  errorbar = TRUE,
+  errorbar_prob = 0.95,
+  alpha = 0.3,
+  jitter = ggplot2::position_jitter(
+    width = 0.2,
+    height = 0
+  ),
+  burn_in = NULL,
+  ...
+) {
   check_model(model, classes = "mHMM")
   m <- model$input$m
   n_subj <- model$input$n_subj
@@ -484,29 +510,29 @@ plot_emiss.cat <- function(model,
   if (is.null(burn_in)) {
     burn_in <- model$input$burn_in
   }
-  if(inherits(errorbar, 'character')){
+  if (inherits(errorbar, 'character')) {
     cli::cli_abort(c(
-        'Argument {.var errorbar} should be a logical indicating whether to plot the credible interval',
-        'x' = 'You specified a string',
-        'i' = 'Please specify a logical'
-      ))
+      'Argument {.var errorbar} should be a logical indicating whether to plot the credible interval',
+      'x' = 'You specified a string',
+      'i' = 'Please specify a logical'
+    ))
   }
-  if(errorbar){
-    if((length(errorbar_prob) != 1)){
+  if (errorbar) {
+    if ((length(errorbar_prob) != 1)) {
       cli::cli_abort(c(
         'Argument {.var errorbar} should be a single number between 0 and 1',
         'x' = 'You specified a vector',
         'i' = 'Please specify a different value'
       ))
     }
-    if(!is.numeric(errorbar_prob)){
+    if (!is.numeric(errorbar_prob)) {
       cli::cli_abort(c(
         'Argument {.var errorbar} should be a single number between 0 and 1',
         'x' = 'You specified a value of class {.cls {class(errorbar_prob)}}',
         'i' = 'Please specify a numeric value'
       ))
     }
-    if(errorbar_prob <= 0 | errorbar_prob >= 1){
+    if (errorbar_prob <= 0 | errorbar_prob >= 1) {
       cli::cli_abort(c(
         'Argument {.var errorbar} should be a number between 0 and 1',
         'x' = 'You specified a value outside of these bounds',
@@ -517,9 +543,9 @@ plot_emiss.cat <- function(model,
   if (type == "point" & is.null(errorbar)) {
     errorbar <- TRUE
   }
-  if(errorbar){
+  if (errorbar) {
     request_ci <- TRUE
-    bounds_errorbar <- c((1-errorbar_prob)/2, (1-(1-errorbar_prob)/2))
+    bounds_errorbar <- c((1 - errorbar_prob) / 2, (1 - (1 - errorbar_prob) / 2))
   } else {
     request_ci <- FALSE
     bounds_errorbar <- NULL
@@ -528,21 +554,35 @@ plot_emiss.cat <- function(model,
   distr <- model$input$data_distr
   n_dep <- model$input$n_dep
   if (type == "bar" | type == "point") {
-      emiss_group_melt <- tidy_mHMM(model, param = 'emiss', level = 'group', ci = request_ci, ess = FALSE, quantiles = bounds_errorbar, burn_in = burn_in)
-      emiss_group_mu <- emiss_group_melt %>%
-        dplyr::filter(.data$param == 'emiss_prob')
-      if (errorbar) {
-          emiss_group_mu <- emiss_group_mu %>%
-            dplyr::select(-c('param', 'level', 'mean')) %>%
-            dplyr::rename_with(~c('vrb', 'category', 'state', 'mean', 'lower', 'upper'))
-          note_errorbar <- paste0("Errorbars represent the ", errorbar_prob*100,"% credible interval")
-        } else {
-        emiss_group_mu <- emiss_group_mu %>%
-          dplyr::select('category', 'state', 'median') %>%
-          dplyr::rename(mean = .data$median)
-      }
+    emiss_group_melt <- tidy_mHMM(
+      model,
+      param = 'emiss',
+      level = 'group',
+      ci = request_ci,
+      ess = FALSE,
+      quantiles = bounds_errorbar,
+      burn_in = burn_in
+    )
+    emiss_group_mu <- emiss_group_melt %>%
+      dplyr::filter(.data$param == 'emiss_prob')
+    if (errorbar) {
+      emiss_group_mu <- emiss_group_mu %>%
+        dplyr::select(-c('param', 'level', 'mean')) %>%
+        dplyr::rename_with(
+          ~ c('vrb', 'category', 'state', 'mean', 'lower', 'upper')
+        )
+      note_errorbar <- paste0(
+        "Errorbars represent the ",
+        errorbar_prob * 100,
+        "% credible interval"
+      )
+    } else {
+      emiss_group_mu <- emiss_group_mu %>%
+        dplyr::select('category', 'state', 'median') %>%
+        dplyr::rename(mean = .data$median)
+    }
     if (type == "bar") {
-      if(facet == 'state'){
+      if (facet == 'state') {
         gg <- ggplot2::ggplot(
           data = emiss_group_mu,
           mapping = ggplot2::aes(
@@ -551,7 +591,7 @@ plot_emiss.cat <- function(model,
             fill = .data$category
           )
         )
-      } else if(facet == 'category'){
+      } else if (facet == 'category') {
         gg <- ggplot2::ggplot(
           data = emiss_group_mu,
           mapping = ggplot2::aes(
@@ -562,7 +602,7 @@ plot_emiss.cat <- function(model,
         )
       }
     } else if (type == "point") {
-      if(facet == 'state'){
+      if (facet == 'state') {
         gg <- ggplot2::ggplot(
           data = emiss_group_mu,
           mapping = ggplot2::aes(
@@ -570,7 +610,7 @@ plot_emiss.cat <- function(model,
             y = .data$mean
           )
         )
-      } else if(facet == 'category'){
+      } else if (facet == 'category') {
         gg <- ggplot2::ggplot(
           data = emiss_group_mu,
           mapping = ggplot2::aes(
@@ -585,8 +625,16 @@ plot_emiss.cat <- function(model,
         ggplot2::geom_col()
     }
     if (subject_effects) {
-        gg_emiss_subject <- tidy_mHMM(model, param = 'emiss', level = 'subject', burn_in = burn_in, ess = FALSE, ci = FALSE, subject = subject)
-      if(facet == 'state'){
+      gg_emiss_subject <- tidy_mHMM(
+        model,
+        param = 'emiss',
+        level = 'subject',
+        burn_in = burn_in,
+        ess = FALSE,
+        ci = FALSE,
+        subject = subject
+      )
+      if (facet == 'state') {
         gg <- gg +
           ggplot2::geom_jitter(
             data = gg_emiss_subject,
@@ -614,7 +662,7 @@ plot_emiss.cat <- function(model,
               color = "grey"
             )
         }
-      } else if(facet == 'category'){
+      } else if (facet == 'category') {
         gg <- gg +
           ggplot2::geom_jitter(
             data = gg_emiss_subject,
@@ -653,7 +701,11 @@ plot_emiss.cat <- function(model,
           lineend = "round"
         ) +
         ggplot2::geom_segment(
-          ggplot2::aes(y = .data$lower, yend = .data$upper, color = .data$category),
+          ggplot2::aes(
+            y = .data$lower,
+            yend = .data$upper,
+            color = .data$category
+          ),
           linewidth = 1.5,
           lineend = "round"
         ) +
@@ -692,7 +744,7 @@ plot_emiss.cat <- function(model,
     ) +
       ggplot2::geom_boxplot()
   }
-  if(facet == 'state'){
+  if (facet == 'state') {
     gg <- gg +
       ggplot2::facet_grid(cols = ggplot2::vars(.data$state))
   } else {
@@ -804,62 +856,75 @@ plot_emiss.cat <- function(model,
 #'
 #' plot_emiss(out_3st_cont_sim)
 #' }
-plot_emiss.mHMM_vary <- function(model,
+plot_emiss.mHMM_vary <- function(
+  model,
   data_distr = 'categorical',
-                       type = "bar",
-                       subject_effects = TRUE,
-                       cat_labels = NULL,
-                       line = FALSE,
-                       subject = NULL,
-                       vrb = NULL,
-                       facet = 'state',
-                       errorbar = 'ci',
-                       errorbar_prob = 0.95,
-                       alpha = 0.3,
-                       jitter = ggplot2::position_jitter(
-                         width = 0.2,
-                         height = 0),
-                       burn_in = NULL,
-  ...) {
-  if(data_distr == 'continuous'){
+  type = "bar",
+  subject_effects = TRUE,
+  cat_labels = NULL,
+  line = FALSE,
+  subject = NULL,
+  vrb = NULL,
+  facet = 'state',
+  errorbar = 'ci',
+  errorbar_prob = 0.95,
+  alpha = 0.3,
+  jitter = ggplot2::position_jitter(
+    width = 0.2,
+    height = 0
+  ),
+  burn_in = NULL,
+  ...
+) {
+  if (data_distr == 'continuous') {
     class(model) <- c('mHMM', 'cont')
     model$input$n_dep <- sum(model$input$data_distr == 'continuous')
-    model$input$dep_labels <- model$input$dep_labels[model$input$data_distr == 'continuous']
+    model$input$dep_labels <- model$input$dep_labels[
+      model$input$data_distr == 'continuous'
+    ]
     model$input$data_distr <- 'continuous'
-    plot_emiss(model = model,
-                       type = type,
-                       subject_effects = subject_effects,
-                       line = line,
-                       subject = subject,
-                       facet = facet,
-                       errorbar = errorbar,
-                       errorbar_prob = errorbar_prob,
-                       alpha = alpha,
-                       jitter = jitter,
-                       burn_in = burn_in)
-  } else if(data_distr == 'categorical'){
+    plot_emiss(
+      model = model,
+      type = type,
+      subject_effects = subject_effects,
+      line = line,
+      subject = subject,
+      facet = facet,
+      errorbar = errorbar,
+      errorbar_prob = errorbar_prob,
+      alpha = alpha,
+      jitter = jitter,
+      burn_in = burn_in
+    )
+  } else if (data_distr == 'categorical') {
     class(model) <- c('mHMM', 'cat')
     model$input$n_dep <- sum(model$input$data_distr == 'categorical')
-    model$input$dep_labels <- model$input$dep_labels[model$input$data_distr == 'categorical']
-    model$input$q_emiss <- model$input$q_emiss[model$input$data_distr == 'categorical']
+    model$input$dep_labels <- model$input$dep_labels[
+      model$input$data_distr == 'categorical'
+    ]
+    model$input$q_emiss <- model$input$q_emiss[
+      model$input$data_distr == 'categorical'
+    ]
     model$input$data_distr <- 'categorical'
-    if(errorbar == 'ci'){
+    if (errorbar == 'ci') {
       errorbar <- TRUE
     } else {
       errorbar = FALSE
     }
-    plot_emiss(model = model,
-                       type = type,
-                       subject_effects = subject_effects,
-                       cat_labels = cat_labels,
-                       line = line,
-                       subject = subject,
-                       vrb = vrb,
-                       facet = facet,
-                       errorbar = errorbar,
-                       errorbar_prob = errorbar_prob,
-                       alpha = alpha,
-                       jitter = jitter,
-                       burn_in = burn_in)
+    plot_emiss(
+      model = model,
+      type = type,
+      subject_effects = subject_effects,
+      cat_labels = cat_labels,
+      line = line,
+      subject = subject,
+      vrb = vrb,
+      facet = facet,
+      errorbar = errorbar,
+      errorbar_prob = errorbar_prob,
+      alpha = alpha,
+      jitter = jitter,
+      burn_in = burn_in
+    )
   }
 }

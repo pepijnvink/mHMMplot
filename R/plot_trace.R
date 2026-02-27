@@ -135,10 +135,10 @@ plot_trace.cont <- function(
       "i" = "Valid inputs are {.val group} or {.val subject}."
     )
   }
-  if(component == 'emiss' & level == 'subject'){
+  if (component == 'emiss' & level == 'subject') {
     param <- 'mu'
   }
-  if(component == 'gamma' & level == 'subject'){
+  if (component == 'gamma' & level == 'subject') {
     param <- 'prob'
   }
   if (is.null(subject) && level == "subject") {
@@ -161,7 +161,7 @@ plot_trace.cont <- function(
     )
   }
   m <- model$input$m
-  if(is.null(vrb)){
+  if (is.null(vrb)) {
     vrb <- model$input$dep_labels
   }
   if (!is.null(subject) && level == "group") {
@@ -175,6 +175,7 @@ plot_trace.cont <- function(
   }
   if (component == "emiss") {
     vrb_ind <- which(vrb %in% model$input$dep_labels)
+    dep_labels <- vrb
     if (is.null(param)) {
       param <- "mu"
     } else if (level == "group") {
@@ -201,25 +202,40 @@ plot_trace.cont <- function(
     } else {
       param <- "mu"
     }
-    if(level == 'group'){
+    if (level == 'group') {
       param_comb <- paste0('emiss_', param, '_bar')
       output <- model[[param_comb]][vrb] %>%
         lapply(tibble::as_tibble)
       output <- do.call(cbind, output) %>%
-        dplyr::rename_with(~paste0(rep(vrb, each = m), '_', param, '_state_', 1:m))
+        dplyr::rename_with(
+          ~ paste0(rep(vrb, each = m), '_', param, '_state_', 1:m)
+        )
     } else {
       ncont <- length(model$input$dep_labels)
-      model$PD_subj[[subject]]$cont_emiss <- model$PD_subj[[subject]]$cont_emiss[, 1:(m*ncont)]
-      colnames(model$PD_subj[[subject]]$cont_emiss) <- paste0(rep(model$input$dep_labels, each = m), '_mu_state_', 1:m)
+      model$PD_subj[[subject]]$cont_emiss <- model$PD_subj[[
+        subject
+      ]]$cont_emiss[, 1:(m * ncont)]
+      colnames(model$PD_subj[[subject]]$cont_emiss) <- paste0(
+        rep(model$input$dep_labels, each = m),
+        '_mu_state_',
+        1:m
+      )
       output <- model$PD_subj[[subject]]$cont_emiss %>%
         tibble::as_tibble() %>%
         dplyr::select(tidyselect::starts_with(vrb))
     }
     output_long <- output %>%
       dplyr::mutate(iter = 1:dplyr::n()) %>%
-      tidyr::pivot_longer(-'iter', values_to = 'value', names_to = c('vrb', 'state'), names_pattern = paste0('(\\w+)_', param, '_state_(\\d+)')) %>%
-      dplyr::mutate(state = factor(.data$state, levels = 1:m, labels = paste('state', 1:m)),
-    vrb = factor(.data$vrb))
+      tidyr::pivot_longer(
+        -'iter',
+        values_to = 'value',
+        names_to = c('vrb', 'state'),
+        names_pattern = paste0('(\\w+)_', param, '_state_(\\d+)')
+      ) %>%
+      dplyr::mutate(
+        state = factor(.data$state, levels = 1:m, labels = paste('state', 1:m)),
+        vrb = factor(.data$vrb, labels = dep_labels)
+      )
     gg <- output_long %>%
       ggplot2::ggplot(ggplot2::aes(
         x = .data$iter,
@@ -231,27 +247,27 @@ plot_trace.cont <- function(
         cols = ggplot2::vars(.data$vrb)
       )
   } else {
-    if(level == 'group'){
+    if (level == 'group') {
       subject <- NULL
     }
     allowed <- c("int", "varint", "prob")
-      if (param %nin% allowed) {
-        allowed_vec <- cli::cli_vec(
-          allowed,
-          style = list(
-            "vec-last" = ", or ",
-            "vec-sep2" = " or "
-          )
+    if (param %nin% allowed) {
+      allowed_vec <- cli::cli_vec(
+        allowed,
+        style = list(
+          "vec-last" = ", or ",
+          "vec-sep2" = " or "
         )
-        cli::cli_abort(
-          c(
-            "x" = "{.val {param}} is not a valid value
+      )
+      cli::cli_abort(
+        c(
+          "x" = "{.val {param}} is not a valid value
             for {.var param} for the desired component.",
-            "i" = "Allowed values for {.var param} are:
+          "i" = "Allowed values for {.var param} are:
             {.val {allowed_vec}}."
-          )
         )
-      }
+      )
+    }
     gg <- plot_trace_gamma(model, m, param = param, level, subject = subject)
   }
   return(gg)
@@ -354,7 +370,7 @@ plot_trace.cat <- function(
   vrb = NULL,
   subject = NULL,
   ...
-)  {
+) {
   if (is.null(level)) {
     cli::cli_abort(
       c(
@@ -373,13 +389,16 @@ plot_trace.cat <- function(
     )
   }
   if (param %nin% c("int", "prob", 'varint')) {
-    comp <- cli::cli_vec(c("int", "prob", 'varint'), style = list("vec-sep2" = " or ", 'vec-last' = ', or '))
+    comp <- cli::cli_vec(
+      c("int", "prob", 'varint'),
+      style = list("vec-sep2" = " or ", 'vec-last' = ', or ')
+    )
     cli::cli_abort(
       "Must provide {.val {comp}} to {.var param}
                    to specify the parameter to plot."
     )
   }
-  if(param == 'prob'){
+  if (param == 'prob') {
     prob = TRUE
   } else {
     prob = FALSE
@@ -420,11 +439,14 @@ plot_trace.cat <- function(
   }
   m <- model$input$m
   dep_labels <- model$input$dep_labels
-  if(is.null(vrb)){
+  if (is.null(vrb)) {
     vrb <- dep_labels[1]
   } else {
-    if(vrb %nin% dep_labels){
-      comp <- cli::cli_vec(dep_labels, style = list("vec-sep2" = " and ", 'vec-last' = ', and '))
+    if (vrb %nin% dep_labels) {
+      comp <- cli::cli_vec(
+        dep_labels,
+        style = list("vec-sep2" = " and ", 'vec-last' = ', and ')
+      )
       cli::cli_abort(c(
         'x' = 'The variable name you provided for {.var vrb} was not used to build the model',
         'i' = 'Valid values for {.var vrb} are {.val {comp}}'
@@ -445,60 +467,137 @@ plot_trace.cat <- function(
   if (component == "emiss") {
     vrb_ind <- which(model$input$dep_labels == vrb)
     q_vrb <- model$input$q_emiss[vrb_ind]
-    if(level == 'group'){
-      if(prob){
+    if (level == 'group') {
+      if (prob) {
         output <- model$emiss_prob_bar[[vrb]] %>%
           tibble::as_tibble()
         output_long <- output %>%
-      dplyr::mutate(iter = 1:dplyr::n()) %>%
-      tidyr::pivot_longer(-'iter', values_to = 'value', names_to = c('category', 'state'), names_pattern = 'int_Emiss(\\d+)_S(\\d+)') %>%
-      dplyr::mutate(state = factor(.data$state, levels = 1:m, labels = paste('state', 1:m)),
-        category = factor(.data$category, levels = 1:q_vrb, labels = paste('category', 1:q_vrb)))
+          dplyr::mutate(iter = 1:dplyr::n()) %>%
+          tidyr::pivot_longer(
+            -'iter',
+            values_to = 'value',
+            names_to = c('category', 'state'),
+            names_pattern = 'int_Emiss(\\d+)_S(\\d+)'
+          ) %>%
+          dplyr::mutate(
+            state = factor(
+              .data$state,
+              levels = 1:m,
+              labels = paste('state', 1:m)
+            ),
+            category = factor(
+              .data$category,
+              levels = 1:q_vrb,
+              labels = paste('category', 1:q_vrb)
+            )
+          )
       } else {
-        if(param == 'int'){
-        output <- model$emiss_int_bar[[vrb]] %>%
-          tibble::as_tibble()
-        output_long <- output %>%
-      dplyr::mutate(iter = 1:dplyr::n()) %>%
-      tidyr::pivot_longer(-'iter', values_to = 'value', names_to = c('category', 'state'), names_pattern = 'int_Emiss(\\d+)_S(\\d+)') %>%
-      dplyr::mutate(state = factor(.data$state, levels = 1:m, labels = paste('state', 1:m)),
-        category = factor(.data$category, levels = 2:q_vrb, labels = paste('category', 2:q_vrb)))
+        if (param == 'int') {
+          output <- model$emiss_int_bar[[vrb]] %>%
+            tibble::as_tibble()
+          output_long <- output %>%
+            dplyr::mutate(iter = 1:dplyr::n()) %>%
+            tidyr::pivot_longer(
+              -'iter',
+              values_to = 'value',
+              names_to = c('category', 'state'),
+              names_pattern = 'int_Emiss(\\d+)_S(\\d+)'
+            ) %>%
+            dplyr::mutate(
+              state = factor(
+                .data$state,
+                levels = 1:m,
+                labels = paste('state', 1:m)
+              ),
+              category = factor(
+                .data$category,
+                levels = 2:q_vrb,
+                labels = paste('category', 2:q_vrb)
+              )
+            )
         } else {
           output <- model$emiss_V_int_bar[[vrb]] %>%
-          tibble::as_tibble()
-        output_long <- output %>%
-      dplyr::mutate(iter = 1:dplyr::n()) %>%
-      tidyr::pivot_longer(-'iter', values_to = 'value', names_to = c('category', 'state'), names_pattern = 'var_int_Emiss(\\d+)_S(\\d+)') %>%
-      dplyr::mutate(state = factor(.data$state, levels = 1:m, labels = paste('state', 1:m)),
-        category = factor(.data$category, levels = 2:q_vrb, labels = paste('category', 2:q_vrb)))
+            tibble::as_tibble()
+          output_long <- output %>%
+            dplyr::mutate(iter = 1:dplyr::n()) %>%
+            tidyr::pivot_longer(
+              -'iter',
+              values_to = 'value',
+              names_to = c('category', 'state'),
+              names_pattern = 'var_int_Emiss(\\d+)_S(\\d+)'
+            ) %>%
+            dplyr::mutate(
+              state = factor(
+                .data$state,
+                levels = 1:m,
+                labels = paste('state', 1:m)
+              ),
+              category = factor(
+                .data$category,
+                levels = 2:q_vrb,
+                labels = paste('category', 2:q_vrb)
+              )
+            )
         }
       }
     } else {
-      if(prob){
-      ncat <- length(model$input$dep_labels)
-      dep_cat <- model$input$dep_labels
-      q_emiss <- model$input$q_emiss
-      if(vrb_ind == 1){
-        vrb_col_indices <- 1:(q_vrb*m)
-      } else {
-        cumul_categories <- sum(q_emiss[1:(vrb_ind-1)])
-        vrb_col_indices <- (cumul_categories*m+1):((cumul_categories*m+q_vrb))
-      }
-      output <- model$PD_subj[[subject]]$cat_emiss[,vrb_col_indices] %>%
-        tibble::as_tibble()
-          output_long <- output %>%
-      dplyr::mutate(iter = 1:dplyr::n()) %>%
-      tidyr::pivot_longer(-'iter', values_to = 'value', names_to = c('state', 'category'), names_pattern = 'dep\\d+_S(\\d+)_emiss(\\d+)') %>%
-      dplyr::mutate(state = factor(.data$state, levels = 1:m, labels = paste('state', 1:m)),
-    category = factor(.data$category, levels = 1:q_vrb, labels = paste('category', 1:q_vrb)))
+      if (prob) {
+        ncat <- length(model$input$dep_labels)
+        dep_cat <- model$input$dep_labels
+        q_emiss <- model$input$q_emiss
+        if (vrb_ind == 1) {
+          vrb_col_indices <- 1:(q_vrb * m)
+        } else {
+          cumul_categories <- sum(q_emiss[1:(vrb_ind - 1)])
+          vrb_col_indices <- (cumul_categories * m + 1):((cumul_categories *
+            m +
+            q_vrb))
+        }
+        output <- model$PD_subj[[subject]]$cat_emiss[, vrb_col_indices] %>%
+          tibble::as_tibble()
+        output_long <- output %>%
+          dplyr::mutate(iter = 1:dplyr::n()) %>%
+          tidyr::pivot_longer(
+            -'iter',
+            values_to = 'value',
+            names_to = c('state', 'category'),
+            names_pattern = 'dep\\d+_S(\\d+)_emiss(\\d+)'
+          ) %>%
+          dplyr::mutate(
+            state = factor(
+              .data$state,
+              levels = 1:m,
+              labels = paste('state', 1:m)
+            ),
+            category = factor(
+              .data$category,
+              levels = 1:q_vrb,
+              labels = paste('category', 1:q_vrb)
+            )
+          )
       } else {
         output <- model$emiss_int_subj[[subject]][[vrb]] %>%
           tibble::as_tibble()
         output_long <- output %>%
-      dplyr::mutate(iter = 1:dplyr::n()) %>%
-      tidyr::pivot_longer(-'iter', values_to = 'value', names_to = c('category', 'state'), names_pattern = 'int_Emiss(\\d+)_S(\\d+)') %>%
-      dplyr::mutate(state = factor(.data$state, levels = 1:m, labels = paste('state', 1:m)),
-        category = factor(.data$category, levels = 2:q_vrb, labels = paste('category', 2:q_vrb)))
+          dplyr::mutate(iter = 1:dplyr::n()) %>%
+          tidyr::pivot_longer(
+            -'iter',
+            values_to = 'value',
+            names_to = c('category', 'state'),
+            names_pattern = 'int_Emiss(\\d+)_S(\\d+)'
+          ) %>%
+          dplyr::mutate(
+            state = factor(
+              .data$state,
+              levels = 1:m,
+              labels = paste('state', 1:m)
+            ),
+            category = factor(
+              .data$category,
+              levels = 2:q_vrb,
+              labels = paste('category', 2:q_vrb)
+            )
+          )
       }
     }
     gg <- output_long %>%
@@ -507,13 +606,15 @@ plot_trace.cat <- function(
         y = .data$value
       )) +
       ggplot2::geom_line() +
-      ggplot2::facet_grid(rows = ggplot2::vars(.data$state),
-    cols = ggplot2::vars(.data$category))
+      ggplot2::facet_grid(
+        rows = ggplot2::vars(.data$state),
+        cols = ggplot2::vars(.data$category)
+      )
   } else {
-    if(level == 'group'){
+    if (level == 'group') {
       subject <- NULL
     }
-    if(is.null(param)){
+    if (is.null(param)) {
       param <- 'int'
     }
     gg <- plot_trace_gamma(model, m, param = param, level, subject = subject)
@@ -523,28 +624,36 @@ plot_trace.cat <- function(
 
 #' @keywords internal
 # trace plot for gamma (group level)
-plot_trace_gamma <- function(model,
-  m,
-  param = 'int',
-  level,
-  subject = NULL) {
-  if(param == 'prob'){
-    if(level == 'group'){
+plot_trace_gamma <- function(model, m, param = 'int', level, subject = NULL) {
+  if (param == 'prob') {
+    if (level == 'group') {
       output <- model$gamma_prob_bar %>%
-      tibble::as_tibble()
+        tibble::as_tibble()
     } else {
       output <- model$PD_subj[[subject]]$trans_prob %>%
-        tibble::as_tibble(.name_repair = ~ vctrs::vec_as_names(names = paste0('S', rep(1:m, each = m), 'toS', rep(1:m, times = m)), quiet = TRUE))
+        tibble::as_tibble(
+          .name_repair = ~ vctrs::vec_as_names(
+            names = paste0('S', rep(1:m, each = m), 'toS', rep(1:m, times = m)),
+            quiet = TRUE
+          )
+        )
     }
     output_long <- output %>%
       dplyr::mutate(iter = 1:dplyr::n()) %>%
-      tidyr::pivot_longer(-'iter',
+      tidyr::pivot_longer(
+        -'iter',
         names_to = c('From', 'To'),
         names_pattern = 'S(\\d+)toS(\\d+)',
         values_to = 'prob'
       ) %>%
-      dplyr::mutate(From = factor(.data$From, levels = 1:m, labels = paste('From State', 1:m)),
-    To = factor(.data$To, levels = 1:m, labels = paste('To State', 1:m)))
+      dplyr::mutate(
+        From = factor(
+          .data$From,
+          levels = 1:m,
+          labels = paste('From State', 1:m)
+        ),
+        To = factor(.data$To, levels = 1:m, labels = paste('To State', 1:m))
+      )
     gg <- output_long %>%
       ggplot2::ggplot(ggplot2::aes(x = .data$iter, y = .data$prob)) +
       ggplot2::geom_line() +
@@ -552,41 +661,56 @@ plot_trace_gamma <- function(model,
         rows = ggplot2::vars(.data$From),
         cols = ggplot2::vars(.data$To)
       )
-  } else if(param == 'int') {
-    if(level == 'group'){
+  } else if (param == 'int') {
+    if (level == 'group') {
       output <- model$gamma_int_bar %>%
-      tibble::as_tibble()
+        tibble::as_tibble()
     } else {
       output <- model$gamma_int_subj[[subject]] %>%
-      tibble::as_tibble()
+        tibble::as_tibble()
     }
     output_long <- output %>%
       dplyr::mutate(iter = 1:dplyr::n()) %>%
-      tidyr::pivot_longer(-'iter',
+      tidyr::pivot_longer(
+        -'iter',
         names_to = c('From', 'To'),
         names_pattern = 'int_S(\\d+)toS(\\d+)',
         values_to = 'prob'
       ) %>%
-      dplyr::mutate(From = factor(.data$From, levels = 1:m, labels = paste('From State', 1:m)),
-    To = factor(.data$To, levels = 2:m, labels = paste('To State', 2:m)))
+      dplyr::mutate(
+        From = factor(
+          .data$From,
+          levels = 1:m,
+          labels = paste('From State', 1:m)
+        ),
+        To = factor(.data$To, levels = 2:m, labels = paste('To State', 2:m))
+      )
     gg <- output_long %>%
       ggplot2::ggplot(ggplot2::aes(x = .data$iter, y = .data$prob)) +
       ggplot2::geom_line() +
       ggplot2::facet_grid(
         rows = ggplot2::vars(.data$From),
-        cols = ggplot2::vars(.data$To))
-  } else if (param == 'varint'){
+        cols = ggplot2::vars(.data$To)
+      )
+  } else if (param == 'varint') {
     output <- model$gamma_V_int_bar %>%
       tibble::as_tibble()
     output_long <- output %>%
       dplyr::mutate(iter = 1:dplyr::n()) %>%
-      tidyr::pivot_longer(-'iter',
+      tidyr::pivot_longer(
+        -'iter',
         names_to = c('From', 'To'),
         names_pattern = 'var_int_S(\\d+)toS(\\d+)',
         values_to = 'prob'
       ) %>%
-      dplyr::mutate(From = factor(.data$From, levels = 1:m, labels = paste('From State', 1:m)),
-    To = factor(.data$To, levels = 2:m, labels = paste('To State', 2:m)))
+      dplyr::mutate(
+        From = factor(
+          .data$From,
+          levels = 1:m,
+          labels = paste('From State', 1:m)
+        ),
+        To = factor(.data$To, levels = 2:m, labels = paste('To State', 2:m))
+      )
     gg <- output_long %>%
       ggplot2::ggplot(ggplot2::aes(x = .data$iter, y = .data$prob)) +
       ggplot2::geom_line() +
@@ -700,11 +824,13 @@ plot_trace.mHMM_vary <- function(
   vrb = NULL,
   subject = NULL,
   ...
-){
-    if(component == 'gamma'){
+) {
+  if (component == 'gamma') {
     class(model) <- c('cont', 'mHMM', 'list')
     model$input$n_dep <- sum(model$input$data_distr == 'continuous')
-    model$input$dep_labels <- model$input$dep_labels[model$input$data_distr == 'continuous']
+    model$input$dep_labels <- model$input$dep_labels[
+      model$input$data_distr == 'continuous'
+    ]
     model$input$data_distr <- 'continuous'
     plot_trace(
       model = model,
@@ -714,37 +840,43 @@ plot_trace.mHMM_vary <- function(
       vrb = vrb,
       subject = subject
     )
-  } else if(component == 'emiss'){
-    if(data_distr == 'continuous'){
+  } else if (component == 'emiss') {
+    if (data_distr == 'continuous') {
       class(model) <- c('cont', 'mHMM', 'list')
-    model$input$n_dep <- sum(model$input$data_distr == 'continuous')
-    model$input$dep_labels <- model$input$dep_labels[model$input$data_distr == 'continuous']
-    model$input$data_distr <- 'continuous'
-    plot_trace(
-      model = model,
-      component = component,
-      param = param,
-      level = level,
-      vrb = vrb,
-      subject = subject
-    )
-    } else if(data_distr == 'categorical'){
+      model$input$n_dep <- sum(model$input$data_distr == 'continuous')
+      model$input$dep_labels <- model$input$dep_labels[
+        model$input$data_distr == 'continuous'
+      ]
+      model$input$data_distr <- 'continuous'
+      plot_trace(
+        model = model,
+        component = component,
+        param = param,
+        level = level,
+        vrb = vrb,
+        subject = subject
+      )
+    } else if (data_distr == 'categorical') {
       class(model) <- c('cat', 'mHMM', 'list')
-    model$input$n_dep <- sum(model$input$data_distr == 'categorical')
-    model$input$dep_labels <- model$input$dep_labels[model$input$data_distr == 'categorical']
-    model$input$q_emiss <- model$input$q_emiss[model$input$data_distr == 'categorical']
-    model$input$data_distr <- 'categorical'
-    if(is.null(vrb)){
-      vrb <- model$input$dep_labels[1]
-    }
-    plot_trace(
-      model = model,
-      component = component,
-      level = level,
-      param = param,
-      vrb = vrb,
-      subject = subject
-    )
+      model$input$n_dep <- sum(model$input$data_distr == 'categorical')
+      model$input$dep_labels <- model$input$dep_labels[
+        model$input$data_distr == 'categorical'
+      ]
+      model$input$q_emiss <- model$input$q_emiss[
+        model$input$data_distr == 'categorical'
+      ]
+      model$input$data_distr <- 'categorical'
+      if (is.null(vrb)) {
+        vrb <- model$input$dep_labels[1]
+      }
+      plot_trace(
+        model = model,
+        component = component,
+        level = level,
+        param = param,
+        vrb = vrb,
+        subject = subject
+      )
     }
   }
 }
@@ -874,10 +1006,10 @@ plot_trace.mHMM_list_cont <- function(
       "i" = "Valid inputs are {.val group} or {.val subject}."
     )
   }
-  if(component == 'emiss' & level == 'subject'){
+  if (component == 'emiss' & level == 'subject') {
     param <- 'mu'
   }
-  if(component == 'gamma' & level == 'subject'){
+  if (component == 'gamma' & level == 'subject') {
     param <- 'prob'
   }
   if (is.null(subject) && level == "subject") {
@@ -901,7 +1033,7 @@ plot_trace.mHMM_list_cont <- function(
   }
   m <- model[[1]]$input$m
   nchains <- length(model)
-  if(is.null(vrb)){
+  if (is.null(vrb)) {
     vrb <- model[[1]]$input$dep_labels
   }
   if (!is.null(subject) && level == "group") {
@@ -941,25 +1073,37 @@ plot_trace.mHMM_list_cont <- function(
     } else {
       param <- "mu"
     }
-    if(level == 'group'){
+    if (level == 'group') {
       param_comb <- paste0('emiss_', param, '_bar')
       output <- lapply(model, function(x) {
         x[[param_comb]][vrb] %>%
           lapply(tibble::as_tibble) %>%
           dplyr::bind_cols(.name_repair = 'minimal') %>%
-          stats::setNames(paste0(rep(vrb, each = m), '_', param, '_state_', 1:m))
+          stats::setNames(paste0(
+            rep(vrb, each = m),
+            '_',
+            param,
+            '_state_',
+            1:m
+          ))
       }) %>%
         dplyr::bind_rows(.id = 'chain')
     } else {
       ncont <- length(model[[1]]$input$dep_labels)
-      for(i in 1:nchains){
-        model[[i]]$PD_subj[[subject]]$cont_emiss <- model[[i]]$PD_subj[[subject]]$cont_emiss[, 1:(m*ncont)]
-        colnames(model[[i]]$PD_subj[[subject]]$cont_emiss) <- paste0(rep(model[[1]]$input$dep_labels, each = m), '_mu_state_', 1:m)
+      for (i in 1:nchains) {
+        model[[i]]$PD_subj[[subject]]$cont_emiss <- model[[i]]$PD_subj[[
+          subject
+        ]]$cont_emiss[, 1:(m * ncont)]
+        colnames(model[[i]]$PD_subj[[subject]]$cont_emiss) <- paste0(
+          rep(model[[1]]$input$dep_labels, each = m),
+          '_mu_state_',
+          1:m
+        )
       }
-      output <- lapply(model, function(x){
+      output <- lapply(model, function(x) {
         x$PD_subj[[subject]]$cont_emiss %>%
-        tibble::as_tibble() %>%
-        dplyr::select(tidyselect::starts_with(paste0(vrb, '_')))
+          tibble::as_tibble() %>%
+          dplyr::select(tidyselect::starts_with(paste0(vrb, '_')))
       }) %>%
         dplyr::bind_rows(.id = 'chain')
     }
@@ -967,10 +1111,17 @@ plot_trace.mHMM_list_cont <- function(
       dplyr::group_by(.data$chain) %>%
       dplyr::mutate(iter = 1:dplyr::n()) %>%
       dplyr::ungroup() %>%
-      tidyr::pivot_longer(-c('iter', 'chain'), values_to = 'value', names_to = c('vrb', 'state'), names_pattern = paste0('(\\w+)_', param, '_state_(\\d+)')) %>%
-      dplyr::mutate(state = factor(.data$state, levels = 1:m, labels = paste('state', 1:m)),
-    vrb = factor(.data$vrb),
-    chain = factor(.data$chain, labels = paste('chain', 1:nchains)))
+      tidyr::pivot_longer(
+        -c('iter', 'chain'),
+        values_to = 'value',
+        names_to = c('vrb', 'state'),
+        names_pattern = paste0('(\\w+)_', param, '_state_(\\d+)')
+      ) %>%
+      dplyr::mutate(
+        state = factor(.data$state, levels = 1:m, labels = paste('state', 1:m)),
+        vrb = factor(.data$vrb),
+        chain = factor(.data$chain, labels = paste('chain', 1:nchains))
+      )
     gg <- output_long %>%
       ggplot2::ggplot(ggplot2::aes(
         x = .data$iter,
@@ -983,28 +1134,36 @@ plot_trace.mHMM_list_cont <- function(
         cols = ggplot2::vars(.data$vrb)
       )
   } else {
-    if(level == 'group'){
+    if (level == 'group') {
       subject <- NULL
     }
     allowed <- c("int", "varint", "prob")
-      if (param %nin% allowed) {
-        allowed_vec <- cli::cli_vec(
-          allowed,
-          style = list(
-            "vec-last" = ", or ",
-            "vec-sep2" = " or "
-          )
+    if (param %nin% allowed) {
+      allowed_vec <- cli::cli_vec(
+        allowed,
+        style = list(
+          "vec-last" = ", or ",
+          "vec-sep2" = " or "
         )
-        cli::cli_abort(
-          c(
-            "x" = "{.val {param}} is not a valid value
+      )
+      cli::cli_abort(
+        c(
+          "x" = "{.val {param}} is not a valid value
             for {.var param} for the desired component.",
-            "i" = "Allowed values for {.var param} are:
+          "i" = "Allowed values for {.var param} are:
             {.val {allowed_vec}}."
-          )
         )
-      }
-    gg <- plot_trace_gamma_list(model, m, param = param, level, subject = subject, nchains = nchains, alpha = alpha)
+      )
+    }
+    gg <- plot_trace_gamma_list(
+      model,
+      m,
+      param = param,
+      level,
+      subject = subject,
+      nchains = nchains,
+      alpha = alpha
+    )
   }
   return(gg)
 }
@@ -1108,7 +1267,7 @@ plot_trace.mHMM_list_cat <- function(
   subject = NULL,
   alpha = 0.5,
   ...
-)  {
+) {
   if (is.null(level)) {
     cli::cli_abort(
       c(
@@ -1127,13 +1286,16 @@ plot_trace.mHMM_list_cat <- function(
     )
   }
   if (param %nin% c("int", "prob", 'varint')) {
-    comp <- cli::cli_vec(c("int", "prob", 'varint'), style = list("vec-sep2" = " or ", 'vec-last' = ', or '))
+    comp <- cli::cli_vec(
+      c("int", "prob", 'varint'),
+      style = list("vec-sep2" = " or ", 'vec-last' = ', or ')
+    )
     cli::cli_abort(
       "Must provide {.val {comp}} to {.var param}
                    to specify the parameter to plot."
     )
   }
-  if(param == 'prob'){
+  if (param == 'prob') {
     prob = TRUE
   } else {
     prob = FALSE
@@ -1175,11 +1337,14 @@ plot_trace.mHMM_list_cat <- function(
   m <- model[[1]]$input$m
   dep_labels <- model[[1]]$input$dep_labels
   nchains <- length(model)
-  if(is.null(vrb)){
+  if (is.null(vrb)) {
     vrb <- dep_labels[1]
   } else {
-    if(vrb %nin% dep_labels){
-      comp <- cli::cli_vec(dep_labels, style = list("vec-sep2" = " and ", 'vec-last' = ', and '))
+    if (vrb %nin% dep_labels) {
+      comp <- cli::cli_vec(
+        dep_labels,
+        style = list("vec-sep2" = " and ", 'vec-last' = ', and ')
+      )
       cli::cli_abort(c(
         'x' = 'The variable name you provided for {.var vrb} was not used to build the model',
         'i' = 'Valid values for {.var vrb} are {.val {comp}}'
@@ -1200,88 +1365,169 @@ plot_trace.mHMM_list_cat <- function(
   if (component == "emiss") {
     vrb_ind <- which(model[[1]]$input$dep_labels == vrb)
     q_vrb <- model[[1]]$input$q_emiss[vrb_ind]
-    if(level == 'group'){
-      if(prob){
+    if (level == 'group') {
+      if (prob) {
         output <- model$emiss_prob_bar[[vrb]] %>%
           tibble::as_tibble()
-        output <- lapply(model, function(x){
+        output <- lapply(model, function(x) {
           x$emiss_prob_bar[[vrb]] %>%
-          tibble::as_tibble()
+            tibble::as_tibble()
         }) %>%
           dplyr::bind_rows(.id = 'chain')
         output_long <- output %>%
           dplyr::group_by(.data$chain) %>%
-      dplyr::mutate(iter = 1:dplyr::n()) %>%
+          dplyr::mutate(iter = 1:dplyr::n()) %>%
           dplyr::ungroup() %>%
-      tidyr::pivot_longer(-c('iter', 'chain'), values_to = 'value', names_to = c('category', 'state'), names_pattern = 'int_Emiss(\\d+)_S(\\d+)') %>%
-      dplyr::mutate(state = factor(.data$state, levels = 1:m, labels = paste('state', 1:m)),
-        category = factor(.data$category, levels = 1:q_vrb, labels = paste('category', 1:q_vrb)),
-        chain = factor(.data$chain, labels = paste('chain', 1:nchains)))
+          tidyr::pivot_longer(
+            -c('iter', 'chain'),
+            values_to = 'value',
+            names_to = c('category', 'state'),
+            names_pattern = 'int_Emiss(\\d+)_S(\\d+)'
+          ) %>%
+          dplyr::mutate(
+            state = factor(
+              .data$state,
+              levels = 1:m,
+              labels = paste('state', 1:m)
+            ),
+            category = factor(
+              .data$category,
+              levels = 1:q_vrb,
+              labels = paste('category', 1:q_vrb)
+            ),
+            chain = factor(.data$chain, labels = paste('chain', 1:nchains))
+          )
       } else {
-        if(param == 'int'){
-        output <- lapply(model, function(x){
-          x$emiss_int_bar[[vrb]] %>%
-          tibble::as_tibble()}) %>%
-          dplyr::bind_rows(.id = 'chain')
-        output_long <- output %>%
-          dplyr::group_by(.data$chain) %>%
-      dplyr::mutate(iter = 1:dplyr::n()) %>%
-          dplyr::ungroup() %>%
-      tidyr::pivot_longer(-c('iter', 'chain'), values_to = 'value', names_to = c('category', 'state'), names_pattern = 'int_Emiss(\\d+)_S(\\d+)') %>%
-      dplyr::mutate(state = factor(.data$state, levels = 1:m, labels = paste('state', 1:m)),
-        category = factor(.data$category, levels = 2:q_vrb, labels = paste('category', 2:q_vrb)),
-          chain = factor(.data$chain, labels = paste('chain', 1:nchains)))
-        } else {
-          output <- lapply(model, function(x){
-            x$emiss_V_int_bar[[vrb]] %>%
-          tibble::as_tibble()}) %>%
+        if (param == 'int') {
+          output <- lapply(model, function(x) {
+            x$emiss_int_bar[[vrb]] %>%
+              tibble::as_tibble()
+          }) %>%
             dplyr::bind_rows(.id = 'chain')
-        output_long <- output %>%
-          dplyr::group_by(.data$chain) %>%
-      dplyr::mutate(iter = 1:dplyr::n()) %>%
-          dplyr::ungroup() %>%
-      tidyr::pivot_longer(-c('iter', 'chain'), values_to = 'value', names_to = c('category', 'state'), names_pattern = 'var_int_Emiss(\\d+)_S(\\d+)') %>%
-      dplyr::mutate(state = factor(.data$state, levels = 1:m, labels = paste('state', 1:m)),
-        category = factor(.data$category, levels = 2:q_vrb, labels = paste('category', 2:q_vrb)),
-          chain = factor(.data$chain, labels = paste('chain', 1:nchains)))
+          output_long <- output %>%
+            dplyr::group_by(.data$chain) %>%
+            dplyr::mutate(iter = 1:dplyr::n()) %>%
+            dplyr::ungroup() %>%
+            tidyr::pivot_longer(
+              -c('iter', 'chain'),
+              values_to = 'value',
+              names_to = c('category', 'state'),
+              names_pattern = 'int_Emiss(\\d+)_S(\\d+)'
+            ) %>%
+            dplyr::mutate(
+              state = factor(
+                .data$state,
+                levels = 1:m,
+                labels = paste('state', 1:m)
+              ),
+              category = factor(
+                .data$category,
+                levels = 2:q_vrb,
+                labels = paste('category', 2:q_vrb)
+              ),
+              chain = factor(.data$chain, labels = paste('chain', 1:nchains))
+            )
+        } else {
+          output <- lapply(model, function(x) {
+            x$emiss_V_int_bar[[vrb]] %>%
+              tibble::as_tibble()
+          }) %>%
+            dplyr::bind_rows(.id = 'chain')
+          output_long <- output %>%
+            dplyr::group_by(.data$chain) %>%
+            dplyr::mutate(iter = 1:dplyr::n()) %>%
+            dplyr::ungroup() %>%
+            tidyr::pivot_longer(
+              -c('iter', 'chain'),
+              values_to = 'value',
+              names_to = c('category', 'state'),
+              names_pattern = 'var_int_Emiss(\\d+)_S(\\d+)'
+            ) %>%
+            dplyr::mutate(
+              state = factor(
+                .data$state,
+                levels = 1:m,
+                labels = paste('state', 1:m)
+              ),
+              category = factor(
+                .data$category,
+                levels = 2:q_vrb,
+                labels = paste('category', 2:q_vrb)
+              ),
+              chain = factor(.data$chain, labels = paste('chain', 1:nchains))
+            )
         }
       }
     } else {
-      if(prob){
-      ncat <- length(model[[1]]$input$dep_labels)
-      dep_cat <- model[[1]]$input$dep_labels
-      q_emiss <- model[[1]]$input$q_emiss
-      if(vrb_ind == 1){
-        vrb_col_indices <- 1:(q_vrb*m)
-      } else {
-        cumul_categories <- sum(q_emiss[1:(vrb_ind-1)])
-        vrb_col_indices <- (cumul_categories*m+1):((cumul_categories*m+q_vrb))
-      }
-      output <- lapply(model, function(x){
-        x$PD_subj[[subject]]$cat_emiss[,vrb_col_indices] %>%
-        tibble::as_tibble()}) %>%
-        dplyr::bind_rows(.id = 'chain')
-          output_long <- output %>%
-            dplyr::group_by(.data$chain) %>%
-      dplyr::mutate(iter = 1:dplyr::n()) %>%
-            dplyr::ungroup() %>%
-      tidyr::pivot_longer(-c('iter', 'chain'), values_to = 'value', names_to = c('state', 'category'), names_pattern = 'dep\\d+_S(\\d+)_emiss(\\d+)') %>%
-      dplyr::mutate(state = factor(.data$state, levels = 1:m, labels = paste('state', 1:m)),
-    category = factor(.data$category, levels = 1:q_vrb, labels = paste('category', 1:q_vrb)),
-          chain = factor(.data$chain, labels = paste('chain', 1:nchains)))
-      } else {
-        output <- lapply(model, function(x){
-          x$emiss_int_subj[[subject]][[vrb]] %>%
-          tibble::as_tibble()}) %>%
+      if (prob) {
+        ncat <- length(model[[1]]$input$dep_labels)
+        dep_cat <- model[[1]]$input$dep_labels
+        q_emiss <- model[[1]]$input$q_emiss
+        if (vrb_ind == 1) {
+          vrb_col_indices <- 1:(q_vrb * m)
+        } else {
+          cumul_categories <- sum(q_emiss[1:(vrb_ind - 1)])
+          vrb_col_indices <- (cumul_categories * m + 1):((cumul_categories *
+            m +
+            q_vrb))
+        }
+        output <- lapply(model, function(x) {
+          x$PD_subj[[subject]]$cat_emiss[, vrb_col_indices] %>%
+            tibble::as_tibble()
+        }) %>%
           dplyr::bind_rows(.id = 'chain')
         output_long <- output %>%
           dplyr::group_by(.data$chain) %>%
-      dplyr::mutate(iter = 1:dplyr::n()) %>%
+          dplyr::mutate(iter = 1:dplyr::n()) %>%
           dplyr::ungroup() %>%
-      tidyr::pivot_longer(-c('iter', 'chain'), values_to = 'value', names_to = c('category', 'state'), names_pattern = 'int_Emiss(\\d+)_S(\\d+)') %>%
-      dplyr::mutate(state = factor(.data$state, levels = 1:m, labels = paste('state', 1:m)),
-        category = factor(.data$category, levels = 2:q_vrb, labels = paste('category', 2:q_vrb)),
-          chain = factor(.data$chain, labels = paste('chain', 1:nchains)))
+          tidyr::pivot_longer(
+            -c('iter', 'chain'),
+            values_to = 'value',
+            names_to = c('state', 'category'),
+            names_pattern = 'dep\\d+_S(\\d+)_emiss(\\d+)'
+          ) %>%
+          dplyr::mutate(
+            state = factor(
+              .data$state,
+              levels = 1:m,
+              labels = paste('state', 1:m)
+            ),
+            category = factor(
+              .data$category,
+              levels = 1:q_vrb,
+              labels = paste('category', 1:q_vrb)
+            ),
+            chain = factor(.data$chain, labels = paste('chain', 1:nchains))
+          )
+      } else {
+        output <- lapply(model, function(x) {
+          x$emiss_int_subj[[subject]][[vrb]] %>%
+            tibble::as_tibble()
+        }) %>%
+          dplyr::bind_rows(.id = 'chain')
+        output_long <- output %>%
+          dplyr::group_by(.data$chain) %>%
+          dplyr::mutate(iter = 1:dplyr::n()) %>%
+          dplyr::ungroup() %>%
+          tidyr::pivot_longer(
+            -c('iter', 'chain'),
+            values_to = 'value',
+            names_to = c('category', 'state'),
+            names_pattern = 'int_Emiss(\\d+)_S(\\d+)'
+          ) %>%
+          dplyr::mutate(
+            state = factor(
+              .data$state,
+              levels = 1:m,
+              labels = paste('state', 1:m)
+            ),
+            category = factor(
+              .data$category,
+              levels = 2:q_vrb,
+              labels = paste('category', 2:q_vrb)
+            ),
+            chain = factor(.data$chain, labels = paste('chain', 1:nchains))
+          )
       }
     }
     gg <- output_long %>%
@@ -1291,108 +1537,169 @@ plot_trace.mHMM_list_cat <- function(
         color = .data$chain
       )) +
       ggplot2::geom_line(alpha = alpha) +
-      ggplot2::facet_grid(rows = ggplot2::vars(.data$state),
-    cols = ggplot2::vars(.data$category))
+      ggplot2::facet_grid(
+        rows = ggplot2::vars(.data$state),
+        cols = ggplot2::vars(.data$category)
+      )
   } else {
-    if(level == 'group'){
+    if (level == 'group') {
       subject <- NULL
     }
-    if(is.null(param)){
+    if (is.null(param)) {
       param <- 'int'
     }
-    gg <- plot_trace_gamma_list(model, m, param = param, level, subject = subject, nchains = nchains, alpha = alpha)
+    gg <- plot_trace_gamma_list(
+      model,
+      m,
+      param = param,
+      level,
+      subject = subject,
+      nchains = nchains,
+      alpha = alpha
+    )
   }
   return(gg)
 }
 
 #' @keywords internal
 # trace plot for gamma (group level)
-plot_trace_gamma_list <- function(model,
+plot_trace_gamma_list <- function(
+  model,
   m,
   param = 'int',
   level,
   subject = NULL,
-nchains,
-alpha) {
-  if(param == 'prob'){
-    if(level == 'group'){
-      output <- lapply(model, function(x){
+  nchains,
+  alpha
+) {
+  if (param == 'prob') {
+    if (level == 'group') {
+      output <- lapply(model, function(x) {
         x$gamma_prob_bar %>%
-      tibble::as_tibble()}) %>%
+          tibble::as_tibble()
+      }) %>%
         dplyr::bind_rows(.id = 'chain')
     } else {
-      output <- lapply(model, function(x){
+      output <- lapply(model, function(x) {
         x$PD_subj[[subject]]$trans_prob %>%
-        tibble::as_tibble(.name_repair = ~ vctrs::vec_as_names(names = paste0('S', rep(1:m, each = m), 'toS', rep(1:m, times = m)), quiet = TRUE))}) %>%
+          tibble::as_tibble(
+            .name_repair = ~ vctrs::vec_as_names(
+              names = paste0(
+                'S',
+                rep(1:m, each = m),
+                'toS',
+                rep(1:m, times = m)
+              ),
+              quiet = TRUE
+            )
+          )
+      }) %>%
         dplyr::bind_rows(.id = 'chain')
     }
     output_long <- output %>%
       dplyr::group_by(.data$chain) %>%
       dplyr::mutate(iter = 1:dplyr::n()) %>%
       dplyr::ungroup() %>%
-      tidyr::pivot_longer(-c('iter', 'chain'),
+      tidyr::pivot_longer(
+        -c('iter', 'chain'),
         names_to = c('From', 'To'),
         names_pattern = 'S(\\d+)toS(\\d+)',
         values_to = 'prob'
       ) %>%
-      dplyr::mutate(From = factor(.data$From, levels = 1:m, labels = paste('From State', 1:m)),
-    To = factor(.data$To, levels = 1:m, labels = paste('To State', 1:m)),
-    chain = factor(.data$chain, labels = paste('chain', 1:nchains)))
+      dplyr::mutate(
+        From = factor(
+          .data$From,
+          levels = 1:m,
+          labels = paste('From State', 1:m)
+        ),
+        To = factor(.data$To, levels = 1:m, labels = paste('To State', 1:m)),
+        chain = factor(.data$chain, labels = paste('chain', 1:nchains))
+      )
     gg <- output_long %>%
-      ggplot2::ggplot(ggplot2::aes(x = .data$iter, y = .data$prob, color = .data$chain)) +
+      ggplot2::ggplot(ggplot2::aes(
+        x = .data$iter,
+        y = .data$prob,
+        color = .data$chain
+      )) +
       ggplot2::geom_line(alpha = alpha) +
       ggplot2::facet_grid(
         rows = ggplot2::vars(.data$From),
         cols = ggplot2::vars(.data$To)
       )
-  } else if(param == 'int') {
-    if(level == 'group'){
-      output <- lapply(model, function(x){
+  } else if (param == 'int') {
+    if (level == 'group') {
+      output <- lapply(model, function(x) {
         x$gamma_int_bar %>%
-      tibble::as_tibble()}) %>%
+          tibble::as_tibble()
+      }) %>%
         dplyr::bind_rows(.id = 'chain')
     } else {
-      output <- lapply(model, function(x){
+      output <- lapply(model, function(x) {
         x$gamma_int_subj[[subject]] %>%
-      tibble::as_tibble()}) %>%
+          tibble::as_tibble()
+      }) %>%
         dplyr::bind_rows(.id = 'chain')
     }
     output_long <- output %>%
       dplyr::group_by(.data$chain) %>%
       dplyr::mutate(iter = 1:dplyr::n()) %>%
       dplyr::ungroup() %>%
-      tidyr::pivot_longer(-c('iter', 'chain'),
+      tidyr::pivot_longer(
+        -c('iter', 'chain'),
         names_to = c('From', 'To'),
         names_pattern = 'int_S(\\d+)toS(\\d+)',
         values_to = 'prob'
       ) %>%
-      dplyr::mutate(From = factor(.data$From, levels = 1:m, labels = paste('From State', 1:m)),
-    To = factor(.data$To, levels = 2:m, labels = paste('To State', 2:m)),
-    chain = factor(.data$chain, labels = paste('chain', 1:nchains)))
+      dplyr::mutate(
+        From = factor(
+          .data$From,
+          levels = 1:m,
+          labels = paste('From State', 1:m)
+        ),
+        To = factor(.data$To, levels = 2:m, labels = paste('To State', 2:m)),
+        chain = factor(.data$chain, labels = paste('chain', 1:nchains))
+      )
     gg <- output_long %>%
-      ggplot2::ggplot(ggplot2::aes(x = .data$iter, y = .data$prob, color = .data$chain)) +
+      ggplot2::ggplot(ggplot2::aes(
+        x = .data$iter,
+        y = .data$prob,
+        color = .data$chain
+      )) +
       ggplot2::geom_line(alpha = alpha) +
       ggplot2::facet_grid(
         rows = ggplot2::vars(.data$From),
-        cols = ggplot2::vars(.data$To))
-  } else if (param == 'varint'){
-    output <- lapply(model, function(x){
+        cols = ggplot2::vars(.data$To)
+      )
+  } else if (param == 'varint') {
+    output <- lapply(model, function(x) {
       x$gamma_V_int_bar %>%
-      tibble::as_tibble()}) %>%
+        tibble::as_tibble()
+    }) %>%
       dplyr::bind_rows(.id = 'chain')
     output_long <- output %>%
       dplyr::group_by(.data$chain) %>%
       dplyr::mutate(iter = 1:dplyr::n()) %>%
-      tidyr::pivot_longer(-c('iter', 'chain'),
+      tidyr::pivot_longer(
+        -c('iter', 'chain'),
         names_to = c('From', 'To'),
         names_pattern = 'var_int_S(\\d+)toS(\\d+)',
         values_to = 'prob'
       ) %>%
-      dplyr::mutate(From = factor(.data$From, levels = 1:m, labels = paste('From State', 1:m)),
-    To = factor(.data$To, levels = 2:m, labels = paste('To State', 2:m)),
-    chain = factor(.data$chain, labels = paste('chain', 1:nchains)))
+      dplyr::mutate(
+        From = factor(
+          .data$From,
+          levels = 1:m,
+          labels = paste('From State', 1:m)
+        ),
+        To = factor(.data$To, levels = 2:m, labels = paste('To State', 2:m)),
+        chain = factor(.data$chain, labels = paste('chain', 1:nchains))
+      )
     gg <- output_long %>%
-      ggplot2::ggplot(ggplot2::aes(x = .data$iter, y = .data$prob, color = .data$chain)) +
+      ggplot2::ggplot(ggplot2::aes(
+        x = .data$iter,
+        y = .data$prob,
+        color = .data$chain
+      )) +
       ggplot2::geom_line(alpha = alpha) +
       ggplot2::facet_grid(
         rows = ggplot2::vars(.data$From),
@@ -1506,49 +1813,16 @@ plot_trace.mHMM_list_vary <- function(
   subject = NULL,
   alpha = 0.5,
   ...
-){
-    if(component == 'gamma'){
-      nchains <- length(model)
-        class(model) <- c('mHMM_list_cont', 'mHMM_list', 'list')
-      for(i in 1:nchains){
-    model[[i]]$input$n_dep <- sum(model[[i]]$input$data_distr == 'continuous')
-    model[[i]]$input$dep_labels <- model[[i]]$input$dep_labels[model$input$data_distr == 'continuous']
-    model[[i]]$input$data_distr <- 'continuous'
-      }
-    plot_trace(
-      model = model,
-      component = component,
-      param = param,
-      level = level,
-      vrb = vrb,
-      subject = subject
-    )
-    } else if(component == 'emiss'){
-    if(data_distr == 'continuous'){
-      class(model) <- c('mHMM_list_cont', 'mHMM_list', 'list')
-      for(i in 1:nchains){
-    model[[i]]$input$n_dep <- sum(model[[i]]$input$data_distr == 'continuous')
-    model[[i]]$input$dep_labels <- model[[i]]$input$dep_labels[model$input$data_distr == 'continuous']
-    model[[i]]$input$data_distr <- 'continuous'
-      }
-    plot_trace(
-      model = model,
-      component = component,
-      param = param,
-      level = level,
-      vrb = vrb,
-      subject = subject
-    )
-    } else if(data_distr == 'categorical'){
-      class(model) <- c('mHMM_list_cat', 'mHMM_list', 'list')
-      for(i in 1:nchains){
-    model[[i]]$input$n_dep <- sum(model[[i]]$input$data_distr == 'categorical')
-    model[[i]]$input$dep_labels <- model[[i]]$input$dep_labels[model$input$data_distr == 'categorical']
-    model[[i]]$input$q_emiss <- model[[i]]$input$q_emiss[model$input$data_distr == 'categorical']
-    model[[i]]$input$data_distr <- 'categorical'
-      }
-    if(is.null(vrb)){
-      vrb <- model[[1]]$input$dep_labels[1]
+) {
+  if (component == 'gamma') {
+    nchains <- length(model)
+    class(model) <- c('mHMM_list_cont', 'mHMM_list', 'list')
+    for (i in 1:nchains) {
+      model[[i]]$input$n_dep <- sum(model[[i]]$input$data_distr == 'continuous')
+      model[[i]]$input$dep_labels <- model[[i]]$input$dep_labels[
+        model$input$data_distr == 'continuous'
+      ]
+      model[[i]]$input$data_distr <- 'continuous'
     }
     plot_trace(
       model = model,
@@ -1558,6 +1832,51 @@ plot_trace.mHMM_list_vary <- function(
       vrb = vrb,
       subject = subject
     )
+  } else if (component == 'emiss') {
+    if (data_distr == 'continuous') {
+      class(model) <- c('mHMM_list_cont', 'mHMM_list', 'list')
+      for (i in 1:nchains) {
+        model[[i]]$input$n_dep <- sum(
+          model[[i]]$input$data_distr == 'continuous'
+        )
+        model[[i]]$input$dep_labels <- model[[i]]$input$dep_labels[
+          model$input$data_distr == 'continuous'
+        ]
+        model[[i]]$input$data_distr <- 'continuous'
+      }
+      plot_trace(
+        model = model,
+        component = component,
+        param = param,
+        level = level,
+        vrb = vrb,
+        subject = subject
+      )
+    } else if (data_distr == 'categorical') {
+      class(model) <- c('mHMM_list_cat', 'mHMM_list', 'list')
+      for (i in 1:nchains) {
+        model[[i]]$input$n_dep <- sum(
+          model[[i]]$input$data_distr == 'categorical'
+        )
+        model[[i]]$input$dep_labels <- model[[i]]$input$dep_labels[
+          model$input$data_distr == 'categorical'
+        ]
+        model[[i]]$input$q_emiss <- model[[i]]$input$q_emiss[
+          model$input$data_distr == 'categorical'
+        ]
+        model[[i]]$input$data_distr <- 'categorical'
+      }
+      if (is.null(vrb)) {
+        vrb <- model[[1]]$input$dep_labels[1]
+      }
+      plot_trace(
+        model = model,
+        component = component,
+        param = param,
+        level = level,
+        vrb = vrb,
+        subject = subject
+      )
     }
   }
 }
