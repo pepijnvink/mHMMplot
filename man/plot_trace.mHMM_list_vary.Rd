@@ -13,6 +13,7 @@ of a Bayesian Multilevel Hidden Markov Model}
   level = "group",
   vrb = NULL,
   subject = NULL,
+  alpha = 0.5,
   ...
 )
 }
@@ -39,6 +40,8 @@ Takes "group" or "subject".}
 
 \item{subject}{Integer specifying the subject to plot
 subject specific parameters for.}
+
+\item{alpha}{alpha value to set the transparency}
 
 \item{...}{Currently not in use}
 }
