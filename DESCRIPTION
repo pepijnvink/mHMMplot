@@ -20,7 +20,8 @@ Imports:
     stats,
     tibble,
     tidyr,
-    tidyselect
+    tidyselect,
+    vctrs
 Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
