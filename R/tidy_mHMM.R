@@ -1930,7 +1930,7 @@ tidy_gamma_group_list <- function(
         cbind(ci_gamma)
     }
     if (ess) {
-      ess_bulk_gamma <- lapply(1:((m - 1)^2), function(x) {
+      ess_bulk_gamma <- lapply(1:((m - 1)*m), function(x) {
         lapply(model, function(y) {
           y$gamma_int_bar[(burn_in + 1):J, x]
         }) %>%
@@ -1939,7 +1939,7 @@ tidy_gamma_group_list <- function(
           posterior::ess_bulk()
       }) %>%
         unlist()
-      ess_tail_gamma <- lapply(1:((m - 1)^2), function(x) {
+      ess_tail_gamma <- lapply(1:((m - 1)*m), function(x) {
         lapply(model, function(y) {
           y$gamma_int_bar[(burn_in + 1):J, x]
         }) %>%
@@ -1956,7 +1956,7 @@ tidy_gamma_group_list <- function(
         cbind(ess_both)
     }
     if (rhat) {
-      rhat_gamma <- lapply(1:((m - 1)^2), function(x) {
+      rhat_gamma <- lapply(1:((m - 1)*m), function(x) {
         lapply(model, function(y) {
           y$gamma_int_bar[(burn_in + 1):J, x]
         }) %>%
@@ -2099,7 +2099,7 @@ tidy_gamma_subj_list <- function(
           cbind(ci_gamma)
       }
       if (ess) {
-        ess_bulk_gamma <- lapply(1:((m - 1)^2), function(x) {
+        ess_bulk_gamma <- lapply(1:((m - 1)*m), function(x) {
           lapply(model, function(y) {
             y$gamma_int_subj[[i]][(burn_in + 1):J, x]
           }) %>%
@@ -2108,7 +2108,7 @@ tidy_gamma_subj_list <- function(
             posterior::ess_bulk()
         }) %>%
           unlist()
-        ess_tail_gamma <- lapply(1:((m - 1)^2), function(x) {
+        ess_tail_gamma <- lapply(1:((m - 1)*m), function(x) {
           lapply(model, function(y) {
             y$gamma_int_subj[[i]][(burn_in + 1):J, x]
           }) %>%
@@ -2125,7 +2125,7 @@ tidy_gamma_subj_list <- function(
           cbind(ess_both)
       }
       if (rhat) {
-        rhat_gamma <- lapply(1:((m - 1)^2), function(x) {
+        rhat_gamma <- lapply(1:((m - 1)*m), function(x) {
           lapply(model, function(y) {
             y$gamma_int_subj[[i]][(burn_in + 1):J, x]
           }) %>%
@@ -2855,9 +2855,9 @@ tidy_mHMM.mHMM_list_vary <- function(
 ) {
   nchains <- length(model)
   if (param == 'gamma') {
-    class(model[[i]]) <- c('mHMM_list_cont', 'mHMM_list', 'list')
+    class(model) <- c('mHMM_list_cont', 'mHMM_list', 'list')
     for (i in 1:nchains) {
-      model[[i]]$input$n_dep <- sum(model$input$data_distr == 'continuous')
+      model[[i]]$input$n_dep <- sum(model[[i]]$input$data_distr == 'continuous')
       model[[i]]$input$dep_labels <- model[[i]]$input$dep_labels[
         model[[i]]$input$data_distr == 'continuous'
       ]
@@ -2877,9 +2877,9 @@ tidy_mHMM.mHMM_list_vary <- function(
     )
   } else if (param == 'emiss') {
     if (data_distr == 'continuous') {
-      class(model[[i]]) <- c('mHMM_list_cont', 'mHMM_list', 'list')
+      class(model) <- c('mHMM_list_cont', 'mHMM_list', 'list')
       for (i in 1:nchains) {
-        model[[i]]$input$n_dep <- sum(model$input$data_distr == 'continuous')
+        model[[i]]$input$n_dep <- sum(model[[i]]$input$data_distr == 'continuous')
         model[[i]]$input$dep_labels <- model[[i]]$input$dep_labels[
           model[[i]]$input$data_distr == 'continuous'
         ]
@@ -2898,14 +2898,14 @@ tidy_mHMM.mHMM_list_vary <- function(
         burn_in = burn_in
       )
     } else if (data_distr == 'categorical') {
-      class(model[[i]]) <- c('mHMM_list_cat', 'mHMM_list', 'list')
+      class(model) <- c('mHMM_list_cat', 'mHMM_list', 'list')
       for (i in 1:nchains) {
-        model[[i]]$input$n_dep <- sum(model$input$data_distr == 'categorical')
+        model[[i]]$input$n_dep <- sum(model[[i]]$input$data_distr == 'categorical')
         model[[i]]$input$dep_labels <- model[[i]]$input$dep_labels[
           model[[i]]$input$data_distr == 'categorical'
         ]
         model[[i]]$input$q_emiss <- model[[i]]$input$q_emiss[
-          model$input$data_distr == 'categorical'
+          model[[i]]$input$data_distr == 'categorical'
         ]
         model[[i]]$input$data_distr <- 'categorical'
       }

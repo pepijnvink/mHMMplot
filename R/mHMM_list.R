@@ -1,18 +1,24 @@
 #' Create mHMM_list object with multiple chains
-#'
-#' @param models List of objects of type `[mHMM::mHMM()]` consisting of different chains.
-#'
+#' 
+#' @param ... Objects of type `mHMM`, where each object is a separate chain.
+#' 
 #' @returns An object of type [[mHMMplot::mHMM_list]]
 #'
 #' @export
-#'
-mHMM_list <- function(models) {
+#' 
+mHMM_list <- function(...){
+   models <- list(...)
+  
+  # If a single list of mHMM objects was passed, unwrap it
+  if (length(models) == 1 && is.list(models[[1]]) && !inherits(models[[1]], c("mHMM", "mHMM_vary"))) {
+    models <- models[[1]]
+  }
   all_mHMM <- all(sapply(models, inherits, 'mHMM'))
   all_mHMM_vary <- all(sapply(models, inherits, 'mHMM_vary'))
   if (!all_mHMM & !all_mHMM_vary) {
     cli::cli_abort(c(
-      "The function `mHMM_list` takes a list of `mHMM` objects",
-      "i" = "Please provide a different list."
+      "The function `mHMM_list` takes `mHMM` objects",
+      "i" = "Please provide different objects."
     ))
   }
   nchains <- length(models)

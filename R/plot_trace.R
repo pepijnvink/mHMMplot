@@ -1814,13 +1814,13 @@ plot_trace.mHMM_list_vary <- function(
   alpha = 0.5,
   ...
 ) {
-  if (component == 'gamma') {
     nchains <- length(model)
+  if (component == 'gamma') {
     class(model) <- c('mHMM_list_cont', 'mHMM_list', 'list')
     for (i in 1:nchains) {
       model[[i]]$input$n_dep <- sum(model[[i]]$input$data_distr == 'continuous')
       model[[i]]$input$dep_labels <- model[[i]]$input$dep_labels[
-        model$input$data_distr == 'continuous'
+        model[[i]]$input$data_distr == 'continuous'
       ]
       model[[i]]$input$data_distr <- 'continuous'
     }
@@ -1840,7 +1840,7 @@ plot_trace.mHMM_list_vary <- function(
           model[[i]]$input$data_distr == 'continuous'
         )
         model[[i]]$input$dep_labels <- model[[i]]$input$dep_labels[
-          model$input$data_distr == 'continuous'
+          model[[i]]$input$data_distr == 'continuous'
         ]
         model[[i]]$input$data_distr <- 'continuous'
       }
@@ -1859,10 +1859,10 @@ plot_trace.mHMM_list_vary <- function(
           model[[i]]$input$data_distr == 'categorical'
         )
         model[[i]]$input$dep_labels <- model[[i]]$input$dep_labels[
-          model$input$data_distr == 'categorical'
+          model[[i]]$input$data_distr == 'categorical'
         ]
         model[[i]]$input$q_emiss <- model[[i]]$input$q_emiss[
-          model$input$data_distr == 'categorical'
+          model[[i]]$input$data_distr == 'categorical'
         ]
         model[[i]]$input$data_distr <- 'categorical'
       }
