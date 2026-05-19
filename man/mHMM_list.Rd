@@ -4,10 +4,10 @@
 \alias{mHMM_list}
 \title{Create mHMM_list object with multiple chains}
 \usage{
-mHMM_list(models)
+mHMM_list(...)
 }
 \arguments{
-\item{models}{List of objects of type `[mHMM::mHMM()]` consisting of different chains.}
+\item{...}{Objects of type `mHMM`, where each object is a separate chain.}
 }
 \value{
 An object of type [[mHMMplot::mHMM_list]]

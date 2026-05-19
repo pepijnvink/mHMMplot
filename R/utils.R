@@ -193,3 +193,19 @@ scale_color_mhmm <- function(which = "color") {
 #' @param rhs A function call using the magrittr semantics.
 #' @return The result of calling `rhs(lhs)`.
 NULL
+
+#' Obtain rhat based on input
+#'
+#' @return value for rhat
+#'
+#' @keywords internal
+#' @noRd
+get_rhat <- function(type = "ranknorm", ...) {
+  if (type == "ranknorm") {
+    posterior::rhat(...)
+  } else if (type == "split") {
+    posterior::rhat_basic(split = TRUE, ...)
+  } else if (type == "basic") {
+    posterior::rhat_basic(split = FALSE, ...)
+  }
+}
