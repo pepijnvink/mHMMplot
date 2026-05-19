@@ -1257,6 +1257,7 @@ tidy_mHMM.mHMM_vary <- function(
 #' @param ci Logical indicating whether credible intervals should be computed.
 #' @param ess Logical indicating whether effective sample size should be computed.
 #' @param rhat Logical indicating whether to include the Gelman-Rubin statistic.
+#' @param rhat_type String indicating the rhat type to return. Takes "ranknorm", "split", or "basic".
 #' @param quantiles Numeric vector specifying the quantiles to use to obtain credible intervals.
 #' @param subjects Optional numeric vector specifying the subjects to obtain a tidy summary for. Ignored when `level = 'group'`.
 #' @param burn_in Optional integer values specifying the number of burnin samples to discard.
@@ -1337,6 +1338,7 @@ tidy_mHMM.mHMM_list_cont <- function(
   ci = TRUE,
   ess = TRUE,
   rhat = TRUE,
+  rhat_type = "ranknorm",
   quantiles = c(0.025, 0.975),
   subjects = NULL,
   burn_in = NULL,
@@ -1389,6 +1391,7 @@ tidy_mHMM.mHMM_list_cont <- function(
         ci,
         ess,
         rhat,
+        rhat_type,
         quantiles,
         prob
       )
@@ -1630,7 +1633,7 @@ tidy_mHMM.mHMM_list_cont <- function(
             }) %>%
               unlist() %>%
               matrix(ncol = nchains) %>%
-              posterior::rhat()
+              get_rhat(type = rhat_type)
           }) %>%
             unlist()
         }) %>%
@@ -1644,7 +1647,7 @@ tidy_mHMM.mHMM_list_cont <- function(
             }) %>%
               unlist() %>%
               matrix(ncol = nchains) %>%
-              posterior::rhat()
+              get_rhat(type = rhat_type)
           }) %>%
             unlist()
         }) %>%
@@ -1658,7 +1661,7 @@ tidy_mHMM.mHMM_list_cont <- function(
             }) %>%
               unlist() %>%
               matrix(ncol = nchains) %>%
-              posterior::rhat()
+              get_rhat(type = rhat_type)
           }) %>%
             unlist()
         }) %>%
@@ -1673,7 +1676,7 @@ tidy_mHMM.mHMM_list_cont <- function(
               unlist() %>%
               matrix(ncol = nchains) %>%
               sqrt() %>%
-              posterior::rhat()
+              get_rhat(type = rhat_type)
           }) %>%
             unlist()
         }) %>%
@@ -1716,6 +1719,7 @@ tidy_mHMM.mHMM_list_cont <- function(
         ci,
         ess,
         rhat,
+        rhat_type,
         quantiles,
         prob
       )
@@ -1782,7 +1786,7 @@ tidy_mHMM.mHMM_list_cont <- function(
               }) %>%
                 unlist() %>%
                 matrix(ncol = nchains) %>%
-                posterior::rhat()
+                get_rhat(type = rhat_type)
             }) %>%
               unlist()
           }) %>%
@@ -1794,7 +1798,7 @@ tidy_mHMM.mHMM_list_cont <- function(
               }) %>%
                 unlist() %>%
                 matrix(ncol = nchains) %>%
-                posterior::rhat()
+                get_rhat(type = rhat_type)
             }) %>%
               unlist()
           }) %>%
@@ -1824,6 +1828,7 @@ tidy_gamma_group_list <- function(
   ci,
   ess,
   rhat,
+  rhat_type,
   quantiles,
   prob
 ) {
@@ -1896,7 +1901,7 @@ tidy_gamma_group_list <- function(
         }) %>%
           unlist() %>%
           matrix(ncol = nchains) %>%
-          posterior::rhat()
+          get_rhat(type = rhat_type)
       }) %>%
         unlist()
       allpars <- allpars %>%
@@ -1930,7 +1935,7 @@ tidy_gamma_group_list <- function(
         cbind(ci_gamma)
     }
     if (ess) {
-      ess_bulk_gamma <- lapply(1:((m - 1)*m), function(x) {
+      ess_bulk_gamma <- lapply(1:((m - 1) * m), function(x) {
         lapply(model, function(y) {
           y$gamma_int_bar[(burn_in + 1):J, x]
         }) %>%
@@ -1939,7 +1944,7 @@ tidy_gamma_group_list <- function(
           posterior::ess_bulk()
       }) %>%
         unlist()
-      ess_tail_gamma <- lapply(1:((m - 1)*m), function(x) {
+      ess_tail_gamma <- lapply(1:((m - 1) * m), function(x) {
         lapply(model, function(y) {
           y$gamma_int_bar[(burn_in + 1):J, x]
         }) %>%
@@ -1956,13 +1961,13 @@ tidy_gamma_group_list <- function(
         cbind(ess_both)
     }
     if (rhat) {
-      rhat_gamma <- lapply(1:((m - 1)*m), function(x) {
+      rhat_gamma <- lapply(1:((m - 1) * m), function(x) {
         lapply(model, function(y) {
           y$gamma_int_bar[(burn_in + 1):J, x]
         }) %>%
           unlist() %>%
           matrix(ncol = nchains) %>%
-          posterior::rhat()
+          get_rhat(type = rhat_type)
       }) %>%
         unlist()
       allpars <- allpars %>%
@@ -1987,6 +1992,7 @@ tidy_gamma_subj_list <- function(
   ci,
   ess,
   rhat,
+  rhat_type,
   quantiles,
   prob
 ) {
@@ -2062,7 +2068,7 @@ tidy_gamma_subj_list <- function(
           }) %>%
             unlist() %>%
             matrix(ncol = nchains) %>%
-            posterior::rhat()
+            get_rhat(type = rhat_type)
         }) %>%
           unlist()
         allpars <- allpars %>%
@@ -2099,7 +2105,7 @@ tidy_gamma_subj_list <- function(
           cbind(ci_gamma)
       }
       if (ess) {
-        ess_bulk_gamma <- lapply(1:((m - 1)*m), function(x) {
+        ess_bulk_gamma <- lapply(1:((m - 1) * m), function(x) {
           lapply(model, function(y) {
             y$gamma_int_subj[[i]][(burn_in + 1):J, x]
           }) %>%
@@ -2108,7 +2114,7 @@ tidy_gamma_subj_list <- function(
             posterior::ess_bulk()
         }) %>%
           unlist()
-        ess_tail_gamma <- lapply(1:((m - 1)*m), function(x) {
+        ess_tail_gamma <- lapply(1:((m - 1) * m), function(x) {
           lapply(model, function(y) {
             y$gamma_int_subj[[i]][(burn_in + 1):J, x]
           }) %>%
@@ -2125,13 +2131,13 @@ tidy_gamma_subj_list <- function(
           cbind(ess_both)
       }
       if (rhat) {
-        rhat_gamma <- lapply(1:((m - 1)*m), function(x) {
+        rhat_gamma <- lapply(1:((m - 1) * m), function(x) {
           lapply(model, function(y) {
             y$gamma_int_subj[[i]][(burn_in + 1):J, x]
           }) %>%
             unlist() %>%
             matrix(ncol = nchains) %>%
-            posterior::rhat()
+            get_rhat(type = rhat_type)
         }) %>%
           unlist()
         allpars <- allpars %>%
@@ -2156,6 +2162,7 @@ tidy_gamma_subj_list <- function(
 #' @param ci Logical indicating whether credible intervals should be computed.
 #' @param ess Logical indicating whether effective sample size should be computed.
 #' @param rhat Logical indicating whether to return the rhat value.
+#' @param rhat_type String indicating the rhat type to return. Takes "ranknorm", "split", or "basic".
 #' @param quantiles Numeric vector specifying the quantiles to use to obtain credible intervals.
 #' @param subjects Optional numeric vector specifying the subjects to obtain a tidy summary for. Ignored when `level = 'group'`
 #' @param burn_in Optional integer values specifying the number of burnin samples to discard.
@@ -2236,6 +2243,7 @@ tidy_mHMM.mHMM_list_cat <- function(
   ci = TRUE,
   ess = TRUE,
   rhat = TRUE,
+  rhat_type = "ranknorm",
   quantiles = c(0.025, 0.975),
   subjects = NULL,
   burn_in = NULL,
@@ -2287,6 +2295,7 @@ tidy_mHMM.mHMM_list_cat <- function(
         ci,
         ess,
         rhat,
+        rhat_type,
         quantiles,
         prob
       )
@@ -2393,7 +2402,7 @@ tidy_mHMM.mHMM_list_cat <- function(
               }) %>%
                 unlist() %>%
                 matrix(ncol = nchains) %>%
-                posterior::rhat()
+                get_rhat(type = rhat_type)
             }) %>%
               unlist()
           }) %>%
@@ -2491,7 +2500,7 @@ tidy_mHMM.mHMM_list_cat <- function(
               }) %>%
                 unlist() %>%
                 matrix(ncol = nchains) %>%
-                posterior::rhat()
+                get_rhat(type = rhat_type)
             }) %>%
               unlist()
           }) %>%
@@ -2536,6 +2545,7 @@ tidy_mHMM.mHMM_list_cat <- function(
         ci,
         ess,
         rhat,
+        rhat_type,
         quantiles,
         prob
       )
@@ -2633,7 +2643,7 @@ tidy_mHMM.mHMM_list_cat <- function(
               }) %>%
                 unlist() %>%
                 matrix(ncol = nchains) %>%
-                posterior::rhat()
+                get_rhat(type = rhat_type)
             }) %>%
               unlist()
             all_emiss_i <- all_emiss_i %>%
@@ -2736,7 +2746,7 @@ tidy_mHMM.mHMM_list_cat <- function(
                 }) %>%
                   unlist() %>%
                   matrix(ncol = nchains) %>%
-                  posterior::rhat()
+                  get_rhat(type = rhat_type)
               }) %>%
                 unlist()
             }) %>%
@@ -2767,6 +2777,7 @@ tidy_mHMM.mHMM_list_cat <- function(
 #' @param ci Logical indicating whether credible intervals should be computed.
 #' @param ess Logical indicating whether effective sample size should be computed.
 #' @param rhat Logical indicating whether to compute the Gelman Rubin statistic.
+#' @param rhat_type String indicating the rhat type to return. Takes "ranknorm", "split", or "basic".
 #' @param quantiles Numeric vector specifying the quantiles to use to obtain credible intervals.
 #' @param subjects Optional numeric vector specifying the subjects to obtain a tidy summary for. Ignored when `level = 'group'`
 #' @param burn_in Optional integer values specifying the number of burnin samples to discard.
@@ -2848,6 +2859,7 @@ tidy_mHMM.mHMM_list_vary <- function(
   ci = TRUE,
   ess = TRUE,
   rhat = TRUE,
+  rhat_type = "ranknorm",
   quantiles = c(0.025, 0.975),
   subjects = NULL,
   burn_in = NULL,
@@ -2871,6 +2883,7 @@ tidy_mHMM.mHMM_list_vary <- function(
       ci = ci,
       ess = ess,
       rhat = rhat,
+      rhat_type = rhat_type,
       quantiles = quantiles,
       subjects = subjects,
       burn_in = burn_in
@@ -2879,7 +2892,9 @@ tidy_mHMM.mHMM_list_vary <- function(
     if (data_distr == 'continuous') {
       class(model) <- c('mHMM_list_cont', 'mHMM_list', 'list')
       for (i in 1:nchains) {
-        model[[i]]$input$n_dep <- sum(model[[i]]$input$data_distr == 'continuous')
+        model[[i]]$input$n_dep <- sum(
+          model[[i]]$input$data_distr == 'continuous'
+        )
         model[[i]]$input$dep_labels <- model[[i]]$input$dep_labels[
           model[[i]]$input$data_distr == 'continuous'
         ]
@@ -2900,7 +2915,9 @@ tidy_mHMM.mHMM_list_vary <- function(
     } else if (data_distr == 'categorical') {
       class(model) <- c('mHMM_list_cat', 'mHMM_list', 'list')
       for (i in 1:nchains) {
-        model[[i]]$input$n_dep <- sum(model[[i]]$input$data_distr == 'categorical')
+        model[[i]]$input$n_dep <- sum(
+          model[[i]]$input$data_distr == 'categorical'
+        )
         model[[i]]$input$dep_labels <- model[[i]]$input$dep_labels[
           model[[i]]$input$data_distr == 'categorical'
         ]

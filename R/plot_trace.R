@@ -234,7 +234,7 @@ plot_trace.cont <- function(
       ) %>%
       dplyr::mutate(
         state = factor(.data$state, levels = 1:m, labels = paste('state', 1:m)),
-        vrb = factor(.data$vrb, labels = dep_labels)
+        vrb = factor(.data$vrb, levels = dep_labels, labels = dep_labels)
       )
     gg <- output_long %>%
       ggplot2::ggplot(ggplot2::aes(
