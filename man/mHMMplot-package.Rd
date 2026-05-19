@@ -11,5 +11,10 @@ Visualize objects created using the mHMMbayes package wih ggplot2. The plotting 
 \author{
 \strong{Maintainer}: Pepijn Vink \email{p.a.vink@uu.nl} (\href{https://orcid.org/0000-0001-6960-9904}{ORCID})
 
+Authors:
+\itemize{
+  \item Pepijn Vink \email{p.a.vink@uu.nl} (\href{https://orcid.org/0000-0001-6960-9904}{ORCID})
+}
+
 }
 \keyword{internal}

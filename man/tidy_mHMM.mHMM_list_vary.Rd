@@ -13,6 +13,7 @@
   ci = TRUE,
   ess = TRUE,
   rhat = TRUE,
+  rhat_type = "ranknorm",
   quantiles = c(0.025, 0.975),
   subjects = NULL,
   burn_in = NULL,
@@ -35,6 +36,8 @@
 \item{ess}{Logical indicating whether effective sample size should be computed.}
 
 \item{rhat}{Logical indicating whether to compute the Gelman Rubin statistic.}
+
+\item{rhat_type}{String indicating the rhat type to return. Takes "ranknorm", "split", or "basic".}
 
 \item{quantiles}{Numeric vector specifying the quantiles to use to obtain credible intervals.}
 
