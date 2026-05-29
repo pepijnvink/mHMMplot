@@ -1976,7 +1976,7 @@ tidy_gamma_group_list <- function(
     mean_gamma <- apply(gamma_bind, 2, mean) %>% unname()
     allpars <- data.frame(
       param = 'int',
-      covariate = NULL,
+      covariate = NA,
       from_state = factor(paste('state', rep(1:m, each = m - 1))),
       to_state = factor(paste('state', rep(2:m, times = m))),
       level = 'group'
