@@ -69,6 +69,7 @@ tidy_gamma_group <- function(model, m, burn_in, J, ci, ess, quantiles, prob) {
       tibble::remove_rownames() %>%
       tibble::as_tibble()
   } else {
+    cov_included <- !inherits(model$gamma_cov_bar, 'character') ## check if a covariate is included
     median_gamma <- apply(
       model$gamma_int_bar[(burn_in + 1):J, ],
       2,
@@ -78,11 +79,33 @@ tidy_gamma_group <- function(model, m, burn_in, J, ci, ess, quantiles, prob) {
     mean_gamma <- apply(model$gamma_int_bar[(burn_in + 1):J, ], 2, mean) %>%
       unname()
     allpars <- data.frame(
+      param = 'int',
+      covariate = NULL,
       from_state = factor(paste('state', rep(1:m, each = m - 1))),
       to_state = factor(paste('state', rep(2:m, times = m))),
       level = 'group'
     ) %>%
       dplyr::mutate(median = median_gamma, mean = mean_gamma)
+    if (cov_included) {
+      ncov <- ncol(model$gamma_cov_bar) / (m * (m - 1)) # number of covariates
+      median_beta <- apply(
+        model$gamma_cov_bar[(burn_in + 1):J, ],
+        2,
+        stats::median
+      ) %>%
+        unname()
+      mean_beta <- apply(model$gamma_cov_bar[(burn_in + 1):J, ], 2, mean) %>%
+        unname()
+      allpars_cov <- data.frame(
+        param = 'beta',
+        covariate = paste('covariate', rep(1:ncov, times = m * (m - 1))),
+        from_state = paste('state', rep(1:3, each = ncov * (m - 1))),
+        to_state = paste('state', rep(2:m, times = ncov * m)),
+        level = 'group'
+      ) %>%
+        dplyr::mutate(median = median_beta, mean = mean_beta)
+      allpars <- rbind(allpars, allpars_cov)
+    }
     if (ci) {
       ci_gamma <- apply(
         model$gamma_int_bar[(burn_in + 1):J, ],
@@ -91,6 +114,16 @@ tidy_gamma_group <- function(model, m, burn_in, J, ci, ess, quantiles, prob) {
         quantiles
       ) %>%
         t()
+      if (cov_included) {
+        ci_gamma_beta <- apply(
+          model$gamma_cov_bar[(burn_in + 1):J, ],
+          2,
+          stats::quantile,
+          quantiles
+        ) %>%
+          t()
+        ci_gamma <- rbind(ci_gamma, ci_gamma_beta)
+      }
       allpars <- allpars %>%
         cbind(ci_gamma)
     }
@@ -109,6 +142,23 @@ tidy_gamma_group <- function(model, m, burn_in, J, ci, ess, quantiles, prob) {
         ess_bulk = ess_bulk_gamma,
         ess_tail = ess_tail_gamma
       )
+      if (cov_included) {
+        ess_bulk_gamma_beta <- apply(
+          model$gamma_cov_bar[(burn_in + 1):J, ],
+          2,
+          posterior::ess_bulk
+        )
+        ess_tail_gamma_beta <- apply(
+          model$gamma_cov_bar[(burn_in + 1):J, ],
+          2,
+          posterior::ess_bulk
+        )
+        ess_both_beta <- data.frame(
+          ess_bulk = ess_bulk_gamma_beta,
+          ess_tail = ess_tail_gamma_beta
+        )
+        ess_both <- rbind(ess_both, ess_both_beta)
+      }
       allpars <- allpars %>%
         cbind(ess_both)
     }
@@ -1915,14 +1965,43 @@ tidy_gamma_group_list <- function(
       x$gamma_int_bar[(burn_in + 1):J, ]
     })
     gamma_bind <- do.call('rbind', gamma_bind)
+    cov_included <- !inherits(model[[1]]$gamma_cov_bar, 'character') ## check if a covariate is included
+    if (cov_included) {
+      gamma_bind_beta <- lapply(model, function(x) {
+        x$gamma_cov_bar[(burn_in + 1):J, ]
+      })
+      gamma_bind_beta <- do.call('rbind', gamma_bind_beta)
+    }
     median_gamma <- apply(gamma_bind, 2, stats::median) %>% unname()
     mean_gamma <- apply(gamma_bind, 2, mean) %>% unname()
     allpars <- data.frame(
+      param = 'int',
+      covariate = NULL,
       from_state = factor(paste('state', rep(1:m, each = m - 1))),
       to_state = factor(paste('state', rep(2:m, times = m))),
       level = 'group'
     ) %>%
       dplyr::mutate(median = median_gamma, mean = mean_gamma)
+    if (cov_included) {
+      ncov <- ncol(gamma_bind_beta) / (m * (m - 1)) # number of covariates
+      median_beta <- apply(
+        gamma_bind_beta,
+        2,
+        stats::median
+      ) %>%
+        unname()
+      mean_beta <- apply(gamma_bind_beta, 2, mean) %>%
+        unname()
+      allpars_cov <- data.frame(
+        param = 'beta',
+        covariate = paste('covariate', rep(1:ncov, times = m * (m - 1))),
+        from_state = paste('state', rep(1:3, each = ncov * (m - 1))),
+        to_state = paste('state', rep(2:m, times = ncov * m)),
+        level = 'group'
+      ) %>%
+        dplyr::mutate(median = median_beta, mean = mean_beta)
+      allpars <- rbind(allpars, allpars_cov)
+    }
     if (ci) {
       ci_gamma <- apply(
         gamma_bind,
@@ -1931,6 +2010,16 @@ tidy_gamma_group_list <- function(
         quantiles
       ) %>%
         t()
+      if (cov_included) {
+        ci_gamma_beta <- apply(
+          gamma_bind_beta,
+          2,
+          stats::quantile,
+          quantiles
+        ) %>%
+          t()
+        ci_gamma <- rbind(ci_gamma, ci_gamma_beta)
+      }
       allpars <- allpars %>%
         cbind(ci_gamma)
     }
@@ -1957,6 +2046,31 @@ tidy_gamma_group_list <- function(
         ess_bulk = ess_bulk_gamma,
         ess_tail = ess_tail_gamma
       )
+      if (cov_included) {
+        ess_bulk_gamma_beta <- lapply(1:((m - 1) * m), function(x) {
+          lapply(model, function(y) {
+            y$gamma_cov_bar[(burn_in + 1):J, x]
+          }) %>%
+            unlist() %>%
+            matrix(ncol = nchains) %>%
+            posterior::ess_bulk()
+        }) %>%
+          unlist()
+        ess_tail_gamma_beta <- lapply(1:((m - 1) * m), function(x) {
+          lapply(model, function(y) {
+            y$gamma_cov_bar[(burn_in + 1):J, x]
+          }) %>%
+            unlist() %>%
+            matrix(ncol = nchains) %>%
+            posterior::ess_tail()
+        }) %>%
+          unlist()
+        ess_both_beta <- data.frame(
+          ess_bulk = ess_bulk_gamma_beta,
+          ess_tail = ess_tail_gamma_beta
+        )
+        ess_both <- rbind(ess_both, ess_both_beta)
+      }
       allpars <- allpars %>%
         cbind(ess_both)
     }
@@ -1970,6 +2084,18 @@ tidy_gamma_group_list <- function(
           get_rhat(type = rhat_type)
       }) %>%
         unlist()
+      if (cov_included) {
+        rhat_gamma_beta <- lapply(1:((m - 1) * m), function(x) {
+          lapply(model, function(y) {
+            y$gamma_cov_bar[(burn_in + 1):J, x]
+          }) %>%
+            unlist() %>%
+            matrix(ncol = nchains) %>%
+            get_rhat(type = rhat_type)
+        }) %>%
+          unlist()
+        rhat_gamma <- c(rhat_gamma, rhat_gamma_beta)
+      }
       allpars <- allpars %>%
         cbind(data.frame(rhat = rhat_gamma))
     }
